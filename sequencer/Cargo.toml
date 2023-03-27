@@ -1,0 +1,9 @@
+[package]
+name = "sequencer"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+tokio = "1.26.0"
+actix-web = "4"
+async-trait = "0.1.68"
