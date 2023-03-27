@@ -3,8 +3,11 @@ use actix_web::{
     App, Error, HttpServer,
 };
 use endpoints::service;
+use kernel::DummyKernel;
 
 mod endpoints;
+mod host;
+mod kernel;
 
 fn app() -> App<
     impl ServiceFactory<
@@ -15,7 +18,7 @@ fn app() -> App<
         InitError = (),
     >,
 > {
-    App::new().service(service())
+    App::new().service(service::<DummyKernel>())
 }
 
 #[actix_web::main]
@@ -24,31 +27,4 @@ async fn main() -> std::io::Result<()> {
     let port = 8080;
 
     HttpServer::new(app).bind((address, port))?.run().await
-}
-
-#[cfg(test)]
-mod tests {
-    use crate::app;
-    use actix_web::{body::MessageBody, http::StatusCode, test};
-
-    #[actix_web::test]
-    async fn test_hello_world_content() {
-        let app = test::init_service(app()).await;
-        let req = test::TestRequest::default().to_request();
-        let resp = test::call_service(&app, req).await;
-
-        let body = resp.into_body().try_into_bytes().unwrap().to_vec();
-        let str = String::from_utf8(body).unwrap();
-
-        assert_eq!(str, "Hello world!")
-    }
-
-    #[actix_web::test]
-    async fn test_hello_world_status() {
-        let app = test::init_service(app()).await;
-        let req = test::TestRequest::default().to_request();
-        let resp = test::call_service(&app, req).await;
-
-        assert_eq!(resp.status(), StatusCode::OK);
-    }
 }
