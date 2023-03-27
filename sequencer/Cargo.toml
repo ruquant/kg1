@@ -7,3 +7,6 @@ edition = "2021"
 tokio = "1.26.0"
 actix-web = "4"
 async-trait = "0.1.68"
+
+tezos_smart_rollup_core = { git = "https://gitlab.com/tezos/tezos" } 
+tezos_smart_rollup_host = { git = "https://gitlab.com/tezos/tezos" } 
