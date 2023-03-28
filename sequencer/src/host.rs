@@ -1,6 +1,29 @@
-use tezos_smart_rollup_host::runtime::{Runtime, RuntimeError, ValueType};
+use std::collections::VecDeque;
 
-pub struct NativeHost {}
+use tezos_smart_rollup_host::{
+    input::Message,
+    path::{OwnedPath, Path},
+    runtime::{Runtime, RuntimeError, ValueType},
+};
+
+#[derive(Default)]
+pub struct NativeHost {
+    inputs: VecDeque<Message>,
+    level: u32,
+    id: u32,
+}
+
+pub trait AddInput {
+    fn add_input(&mut self, input: Vec<u8>);
+}
+
+impl AddInput for NativeHost {
+    fn add_input(&mut self, input: Vec<u8>) {
+        let msg = Message::new(self.level, self.id, input);
+        self.id += 1;
+        self.inputs.push_back(msg);
+    }
+}
 
 impl Runtime for NativeHost {
     fn write_output(&mut self, _from: &[u8]) -> Result<(), RuntimeError> {
@@ -12,7 +35,7 @@ impl Runtime for NativeHost {
     }
 
     fn read_input(&mut self) -> Result<Option<Message>, RuntimeError> {
-        todo!()
+        Ok(self.inputs.pop_front())
     }
 
     fn store_has<T: Path>(&self, _path: &T) -> Result<Option<ValueType>, RuntimeError> {
