@@ -1,4 +1,4 @@
-use tezos_smart_rollup_host::{path::RefPath, runtime::Runtime};
+use tezos_smart_rollup_host::runtime::Runtime;
 
 pub trait Kernel {
     fn entry<Host: Runtime>(host: &mut Host);
@@ -8,8 +8,31 @@ pub trait Kernel {
 
 pub struct DummyKernel;
 
-impl Kernel for DummyKernel {
-    fn entry<Host: Runtime>(host: &mut Host) {
+/// Kernel implementation for test
+///
+/// Any kernel are supported
+mod external_kernel {
+    use tezos_smart_rollup_host::{
+        path::RefPath,
+        runtime::{Runtime, RuntimeError},
+    };
+
+    const COUNTER_PATH: RefPath = RefPath::assert_from(b"/counter");
+
+    #[derive(Default)]
+    pub struct Counter {
+        inner: u64,
+    }
+
+    pub fn write_counter<Host: Runtime>(
+        host: &mut Host,
+        counter: &Counter,
+    ) -> Result<(), RuntimeError> {
+        let src = counter.inner.to_be_bytes();
+        host.store_write(&COUNTER_PATH, &src, 0)
+    }
+
+    pub fn entry<Host: Runtime>(host: &mut Host) {
         let msg = "Hello kernel!";
         host.write_debug(msg);
 
@@ -18,9 +41,9 @@ impl Kernel for DummyKernel {
             match input {
                 Ok(Some(_)) => {
                     host.write_debug("A message has been received");
-                    let path = RefPath::try_from("/counter").unwrap();
-                    let counter: u64 = 1;
-                    let () = host.store_write(&path, &counter.to_be_bytes(), 0).unwrap();
+
+                    let counter = Counter::default();
+                    let () = write_counter(host, &counter).unwrap();
                 }
                 Ok(None) => {
                     host.write_debug("End of the inbox");
@@ -32,5 +55,11 @@ impl Kernel for DummyKernel {
                 }
             }
         }
+    }
+}
+
+impl Kernel for DummyKernel {
+    fn entry<Host: Runtime>(host: &mut Host) {
+        external_kernel::entry(host);
     }
 }
