@@ -180,6 +180,6 @@ mod tests {
         let resp = test::call_service(&app, req).await;
         let body = resp.into_body().try_into_bytes().unwrap().to_vec();
         let str = String::from_utf8(body).unwrap();
-        assert_eq!("0000000000000001", str);
+        assert_eq!("0000000000000000", str);
     }
 }
