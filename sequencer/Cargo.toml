@@ -10,3 +10,5 @@ async-trait = "0.1.68"
 
 tezos_smart_rollup_core = { git = "https://gitlab.com/tezos/tezos" } 
 tezos_smart_rollup_host = { git = "https://gitlab.com/tezos/tezos" } 
+serde = "1.0.158"
+hex = "0.4.3"

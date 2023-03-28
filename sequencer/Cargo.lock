@@ -1155,6 +1155,8 @@ version = "0.1.0"
 dependencies = [
  "actix-web",
  "async-trait",
+ "hex",
+ "serde",
  "tezos_smart_rollup_core",
  "tezos_smart_rollup_host",
  "tokio",

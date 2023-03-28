@@ -1,10 +1,26 @@
 use actix_web::{web, Responder, Scope};
+use serde::{Deserialize, Serialize};
 
-use crate::{host::NativeHost, kernel::DummyKernel, kernel::Kernel};
+use crate::{
+    host::{AddInput, NativeHost},
+    kernel::DummyKernel,
+    kernel::Kernel,
+};
 
-async fn post_operation() -> impl Responder {
+#[derive(Deserialize, Serialize)]
+struct Body {
+    pub data: String,
+}
+
+async fn post_operation(body: web::Json<Body>) -> impl Responder {
+    // Check the body
+    let data = hex::decode(&body.data).unwrap();
+
     println!("Operation has been submitted to the sequencer");
-    let mut host = NativeHost {};
+
+    let mut host = NativeHost::default();
+    host.add_input(data);
+
     DummyKernel::entry(&mut host);
     "Operation submitted"
 }
@@ -16,7 +32,7 @@ pub fn service<K: Kernel>() -> Scope {
 
 #[cfg(test)]
 mod tests {
-    use crate::app;
+    use crate::{app, endpoints::Body};
     use actix_web::{
         body::MessageBody,
         http::{Method, StatusCode},
@@ -28,6 +44,9 @@ mod tests {
         let app = test::init_service(app()).await;
         let req = test::TestRequest::with_uri("/operations")
             .method(Method::POST)
+            .set_json(Body {
+                data: "00010101".to_string(),
+            })
             .to_request();
 
         let resp = test::call_service(&app, req).await;
@@ -43,6 +62,9 @@ mod tests {
         let app = test::init_service(app()).await;
         let req = test::TestRequest::with_uri("/operations")
             .method(Method::POST)
+            .set_json(Body {
+                data: "01010101".to_string(),
+            })
             .to_request();
 
         let resp = test::call_service(&app, req).await;
