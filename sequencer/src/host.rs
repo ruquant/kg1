@@ -7,15 +7,23 @@ use tezos_smart_rollup_host::{
     Error,
 };
 
-pub struct NativeHost {
+use crate::database::Database;
+
+pub struct NativeHost<D>
+where
+    D: Database,
+{
     inputs: VecDeque<Message>,
     level: u32,
     id: u32,
-    db: sled::Db,
+    db: D,
 }
 
-impl NativeHost {
-    pub fn new(db: sled::Db) -> Self {
+impl<D> NativeHost<D>
+where
+    D: Database,
+{
+    pub fn new(db: D) -> Self {
         NativeHost {
             inputs: VecDeque::default(),
             level: 0,
@@ -38,7 +46,10 @@ pub trait AddInput {
     fn add_input(&mut self, input: Vec<u8>);
 }
 
-impl AddInput for NativeHost {
+impl<D> AddInput for NativeHost<D>
+where
+    D: Database,
+{
     fn add_input(&mut self, input: Vec<u8>) {
         let msg = Message::new(self.level, self.id, input);
         self.id += 1;
@@ -46,7 +57,10 @@ impl AddInput for NativeHost {
     }
 }
 
-impl Runtime for NativeHost {
+impl<D> Runtime for NativeHost<D>
+where
+    D: Database,
+{
     fn write_output(&mut self, _from: &[u8]) -> Result<(), RuntimeError> {
         todo!()
     }
@@ -70,8 +84,10 @@ impl Runtime for NativeHost {
         max_bytes: usize,
     ) -> Result<Vec<u8>, RuntimeError> {
         let NativeHost { db, .. } = self;
-        let key = path.as_bytes();
-        let res = db.get(key);
+        let path = std::str::from_utf8(path.as_bytes())
+            .map_err(|_| RuntimeError::HostErr(Error::StoreInvalidKey))?;
+
+        let res = db.read(path);
         match res {
             Ok(Some(vec)) => {
                 let mut data = vec
@@ -106,10 +122,12 @@ impl Runtime for NativeHost {
         at_offset: usize,
     ) -> Result<(), RuntimeError> {
         let NativeHost { db, .. } = self;
-        let key = path.as_bytes();
+        let path = std::str::from_utf8(path.as_bytes())
+            .map_err(|_| RuntimeError::HostErr(Error::StoreInvalidKey))?;
+
         let src = check_data_size(src)?;
         let data = src.iter().skip(at_offset).copied().collect::<Vec<u8>>();
-        let res = db.insert(key, data);
+        let res = db.write(path, &data);
         match res {
             Ok(_) => Ok(()),
             Err(_) => Err(RuntimeError::HostErr(Error::GenericInvalidAccess)),

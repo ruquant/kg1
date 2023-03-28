@@ -3,15 +3,17 @@ use actix_web::{
     web::Data,
     App, Error, HttpServer,
 };
+use database::{sled::SledDatabase, Database};
 use endpoints::service;
 use kernel::DummyKernel;
 
+mod database;
 mod endpoints;
 mod host;
 mod kernel;
 
-fn app(
-    db: sled::Db,
+fn app<D: Database + 'static>(
+    db: D,
 ) -> App<
     impl ServiceFactory<
         ServiceRequest,
@@ -25,7 +27,7 @@ fn app(
 
     App::new()
         .app_data(db_state)
-        .service(service::<DummyKernel>())
+        .service(service::<DummyKernel, SledDatabase>())
 }
 
 #[actix_web::main]
@@ -34,7 +36,7 @@ async fn main() -> std::io::Result<()> {
     let port = 8080;
     let db_uri = "sequencer-storage";
 
-    let db: sled::Db = sled::open(db_uri).unwrap();
+    let db = SledDatabase::new(db_uri);
 
     HttpServer::new(move || app(db.clone()))
         .bind((address, port))?

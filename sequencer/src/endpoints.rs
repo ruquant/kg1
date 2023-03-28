@@ -6,6 +6,7 @@ use actix_web::{
 use serde::{Deserialize, Serialize};
 
 use crate::{
+    database::Database,
     host::{AddInput, NativeHost},
     kernel::DummyKernel,
     kernel::Kernel,
@@ -16,14 +17,14 @@ struct Body {
     pub data: String,
 }
 
-async fn post_operation(body: web::Json<Body>, db: web::Data<sled::Db>) -> impl Responder {
+async fn post_operation<D: Database>(body: web::Json<Body>, db: web::Data<D>) -> impl Responder {
     // Check the body
     let data = hex::decode(&body.data).unwrap();
     let db = db.as_ref().clone();
 
     println!("Operation has been submitted to the sequencer");
 
-    let mut host = NativeHost::new(db);
+    let mut host = NativeHost::<D>::new(db);
 
     host.add_input(data);
 
@@ -36,8 +37,8 @@ pub struct Path {
     path: String,
 }
 
-async fn get_durable_state(query: Query<Path>, db: web::Data<sled::Db>) -> impl Responder {
-    let res = db.get(&query.path);
+async fn get_durable_state<D: Database>(query: Query<Path>, db: web::Data<D>) -> impl Responder {
+    let res = db.read(&query.path);
     match res {
         Ok(Some(data)) => {
             let res = hex::encode(data);
@@ -49,17 +50,21 @@ async fn get_durable_state(query: Query<Path>, db: web::Data<sled::Db>) -> impl 
 }
 
 /// Exposes all the endpoint of the application
-pub fn service<K: Kernel>() -> Scope {
+pub fn service<K, D>() -> Scope
+where
+    K: Kernel,
+    D: Database + 'static,
+{
     web::scope("")
-        .route("/operations", web::post().to(post_operation))
-        .route("/state", web::get().to(get_durable_state))
+        .route("/operations", web::post().to(post_operation::<D>))
+        .route("/state", web::get().to(get_durable_state::<D>))
 }
 
 #[cfg(test)]
 mod tests {
     use std::fs;
 
-    use crate::{app, endpoints::Body};
+    use crate::{app, database::sled::SledDatabase, endpoints::Body};
     use actix_web::{
         body::MessageBody,
         http::{Method, StatusCode},
@@ -67,14 +72,14 @@ mod tests {
     };
 
     struct Db {
-        inner: sled::Db,
+        inner: SledDatabase,
         path: String,
     }
 
     impl Default for Db {
         fn default() -> Self {
             let path: String = format!("/tmp/{}", uuid::Uuid::new_v4().to_string());
-            let db = sled::open(&path).unwrap();
+            let db = SledDatabase::new(&path);
             Self { inner: db, path }
         }
     }
