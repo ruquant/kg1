@@ -65,11 +65,29 @@ impl Runtime for NativeHost {
 
     fn store_read<T: Path>(
         &self,
-        _path: &T,
-        _from_offset: usize,
-        _max_bytes: usize,
+        path: &T,
+        from_offset: usize,
+        max_bytes: usize,
     ) -> Result<Vec<u8>, RuntimeError> {
-        todo!()
+        let NativeHost { db, .. } = self;
+        let key = path.as_bytes();
+        let res = db.get(key);
+        match res {
+            Ok(Some(vec)) => {
+                let mut data = vec
+                    .to_vec()
+                    .iter()
+                    .skip(from_offset)
+                    .copied()
+                    .collect::<Vec<u8>>();
+                if data.len() > max_bytes {
+                    data.resize(max_bytes, 0);
+                }
+                Ok(data)
+            }
+            Err(_) => Err(RuntimeError::HostErr(Error::GenericInvalidAccess)),
+            Ok(None) => Err(RuntimeError::HostErr(Error::StoreNotANode)),
+        }
     }
 
     fn store_read_slice<T: Path>(

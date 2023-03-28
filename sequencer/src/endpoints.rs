@@ -173,6 +173,15 @@ mod tests {
         let resp = test::call_service(&app, req).await;
         assert_eq!(resp.status(), StatusCode::OK);
 
+        let req = test::TestRequest::with_uri("/operations")
+            .method(Method::POST)
+            .set_json(Body {
+                data: "01010101".to_string(),
+            })
+            .to_request();
+        let resp = test::call_service(&app, req).await;
+        assert_eq!(resp.status(), StatusCode::OK);
+
         let req = test::TestRequest::with_uri("/state?path=/counter")
             .method(Method::GET)
             .to_request();
@@ -180,6 +189,6 @@ mod tests {
         let resp = test::call_service(&app, req).await;
         let body = resp.into_body().try_into_bytes().unwrap().to_vec();
         let str = String::from_utf8(body).unwrap();
-        assert_eq!("0000000000000000", str);
+        assert_eq!("0000000000000002", str);
     }
 }
