@@ -4,13 +4,34 @@ use tezos_smart_rollup_host::{
     input::Message,
     path::{OwnedPath, Path},
     runtime::{Runtime, RuntimeError, ValueType},
+    Error,
 };
 
-#[derive(Default)]
 pub struct NativeHost {
     inputs: VecDeque<Message>,
     level: u32,
     id: u32,
+    db: sled::Db,
+}
+
+impl NativeHost {
+    pub fn new(db: sled::Db) -> Self {
+        NativeHost {
+            inputs: VecDeque::default(),
+            level: 0,
+            id: 0,
+            db,
+        }
+    }
+}
+
+/// Check the size of the data
+///
+/// The data should have a size greater than 2^31
+pub fn check_data_size(data: &[u8]) -> Result<&[u8], RuntimeError> {
+    i32::try_from(data.len())
+        .map_err(|_| RuntimeError::HostErr(Error::StoreValueSizeExceeded))
+        .map(|_| data)
 }
 
 pub trait AddInput {
@@ -62,11 +83,19 @@ impl Runtime for NativeHost {
 
     fn store_write<T: Path>(
         &mut self,
-        _path: &T,
-        _src: &[u8],
-        _at_offset: usize,
+        path: &T,
+        src: &[u8],
+        at_offset: usize,
     ) -> Result<(), RuntimeError> {
-        todo!()
+        let NativeHost { db, .. } = self;
+        let key = path.as_bytes();
+        let src = check_data_size(src)?;
+        let data = src.iter().skip(at_offset).copied().collect::<Vec<u8>>();
+        let res = db.insert(key, data);
+        match res {
+            Ok(_) => Ok(()),
+            Err(_) => Err(RuntimeError::HostErr(Error::GenericInvalidAccess)),
+        }
     }
 
     fn store_delete<T: Path>(&mut self, _path: &T) -> Result<(), RuntimeError> {
