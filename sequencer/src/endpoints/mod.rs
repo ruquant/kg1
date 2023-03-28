@@ -1,53 +1,9 @@
-use actix_web::{
-    http::StatusCode,
-    web::{self, Query},
-    HttpResponseBuilder, Responder, Scope,
-};
-use serde::{Deserialize, Serialize};
+use actix_web::{web, Scope};
 
-use crate::{
-    database::Database,
-    host::{AddInput, NativeHost},
-    kernel::DummyKernel,
-    kernel::Kernel,
-};
+use crate::{database::Database, kernel::Kernel};
 
-#[derive(Deserialize, Serialize)]
-struct Body {
-    pub data: String,
-}
-
-async fn post_operation<D: Database>(body: web::Json<Body>, db: web::Data<D>) -> impl Responder {
-    // Check the body
-    let data = hex::decode(&body.data).unwrap();
-    let db = db.as_ref().clone();
-
-    println!("Operation has been submitted to the sequencer");
-
-    let mut host = NativeHost::<D>::new(db);
-
-    host.add_input(data);
-
-    DummyKernel::entry(&mut host);
-    "Operation submitted"
-}
-
-#[derive(Deserialize, Serialize)]
-pub struct Path {
-    path: String,
-}
-
-async fn get_durable_state<D: Database>(query: Query<Path>, db: web::Data<D>) -> impl Responder {
-    let res = db.read(&query.path);
-    match res {
-        Ok(Some(data)) => {
-            let res = hex::encode(data);
-            HttpResponseBuilder::new(StatusCode::OK).body(res)
-        }
-        Ok(None) => HttpResponseBuilder::new(StatusCode::NOT_FOUND).finish(),
-        Err(_) => HttpResponseBuilder::new(StatusCode::INTERNAL_SERVER_ERROR).finish(),
-    }
-}
+mod get_durable_state;
+mod post_operation;
 
 /// Exposes all the endpoint of the application
 pub fn service<K, D>() -> Scope
@@ -56,20 +12,20 @@ where
     D: Database + 'static,
 {
     web::scope("")
-        .route("/operations", web::post().to(post_operation::<D>))
-        .route("/state", web::get().to(get_durable_state::<D>))
+        .route("/operations", web::post().to(post_operation::endpoint::<D>))
+        .route("/state", web::get().to(get_durable_state::endpoint::<D>))
 }
 
 #[cfg(test)]
 mod tests {
-    use std::fs;
-
-    use crate::{app, database::sled::SledDatabase, endpoints::Body};
+    use super::post_operation::Body;
+    use crate::{app, database::sled::SledDatabase};
     use actix_web::{
         body::MessageBody,
         http::{Method, StatusCode},
         test,
     };
+    use std::fs;
 
     struct Db {
         inner: SledDatabase,
