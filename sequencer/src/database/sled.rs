@@ -64,7 +64,10 @@ impl SledDatabase {
                 children: vec![subkey.to_string()],
             },
             Some(mut node) => {
-                node.children.push(subkey.to_string());
+                let subkey = subkey.to_string();
+                if !node.children.contains(&subkey) {
+                    node.children.push(subkey);
+                }
                 node
             }
         };
@@ -84,7 +87,7 @@ impl Database for SledDatabase {
         let node = Node {
             key: path.to_string(),
             value: Some(data.to_vec()),
-            children: vec![],
+            children: Vec::new(),
         };
 
         let _ = self.write_node(&node)?;
@@ -135,6 +138,44 @@ impl Database for SledDatabase {
                 let node =
                     bincode::deserialize(&bytes).map_err(|_| DatabaseError::EncodingError)?;
                 Ok(Some(node))
+            }
+        }
+    }
+
+    /// Copy a node to a new path
+    ///
+    /// TODO: this is really not optimized
+    fn copy(&self, from: &str, to: &str) -> Result<(), DatabaseError> {
+        let node = self.read_node(from)?;
+        match node {
+            None => Ok(()),
+            Some(node) => {
+                for child in &node.children {
+                    let from_path = if from == "/" {
+                        format!("/{}", child)
+                    } else {
+                        format!("{}/{}", from, child)
+                    };
+                    let to_path = if from == "/" {
+                        format!("/{}", child)
+                    } else {
+                        format!("{}/{}", to, child)
+                    };
+                    self.copy(&from_path, &to_path)?;
+                }
+                let copied = Node {
+                    key: to.to_string(),
+                    value: node.value,
+                    children: node.children,
+                };
+                self.write_node(&copied)?;
+
+                let subkeys = SledDatabase::get_all_subkeys(to);
+                // Creates/Update node's subkeys
+                for (path, subkey) in subkeys {
+                    self.add_subkey(&path, &subkey)?;
+                }
+                Ok(())
             }
         }
     }
@@ -241,5 +282,28 @@ mod tests {
         assert_eq!(root_res, empty);
         assert_eq!(path_res, empty);
         assert_eq!(sub_res, empty);
+    }
+
+    #[test]
+    fn test_copy() {
+        let database = Db::default();
+        let database = database.as_ref();
+        let data = [0x01, 0x02, 0x03, 0x04];
+
+        let _ = database.write("/path/a/b", &data).unwrap();
+        let _ = database.copy("/path", "/c").unwrap();
+
+        let c_res = database.get_subkeys("/c").unwrap();
+        let a_res = database.get_subkeys("/c/a").unwrap();
+        let b_res = database.get_subkeys("/c/a/b").unwrap();
+        let root_res = database.get_subkeys("/").unwrap();
+        let copied_res = database.read("/c/a/b").unwrap().unwrap();
+
+        let empty: Vec<String> = Vec::default();
+        assert_eq!(c_res, vec!["a"]);
+        assert_eq!(a_res, vec!["b"]);
+        assert_eq!(b_res, empty);
+        assert_eq!(root_res, vec!["path", "c"]);
+        assert_eq!(copied_res, data)
     }
 }

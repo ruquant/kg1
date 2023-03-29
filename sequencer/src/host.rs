@@ -204,10 +204,18 @@ where
 
     fn store_copy(
         &mut self,
-        _from_path: &impl Path,
-        _to_path: &impl Path,
+        from_path: &impl Path,
+        to_path: &impl Path,
     ) -> Result<(), RuntimeError> {
-        todo!()
+        let from = std::str::from_utf8(from_path.as_bytes())
+            .map_err(|_| RuntimeError::HostErr(Error::StoreInvalidKey))?;
+
+        let to = std::str::from_utf8(to_path.as_bytes())
+            .map_err(|_| RuntimeError::HostErr(Error::StoreInvalidKey))?;
+
+        self.db
+            .copy(from, to)
+            .map_err(|_| RuntimeError::HostErr(Error::GenericInvalidAccess))
     }
 
     fn reveal_preimage(

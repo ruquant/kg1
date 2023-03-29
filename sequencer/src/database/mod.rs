@@ -33,12 +33,15 @@ pub trait Database: Clone {
 
     /// Read a node
     fn read_node(&self, path: &str) -> Result<Option<Node>, DatabaseError>;
+
+    /// Copy a node to a new path
+    fn copy(&self, from: &str, to: &str) -> Result<(), DatabaseError>;
 }
 
 impl Node {
     /// Get the children of the node
-    pub fn children(&self) -> &[String] {
-        &self.children
+    pub fn children(&self) -> Vec<String> {
+        self.children.to_vec()
     }
 
     /// Get the value of the node
