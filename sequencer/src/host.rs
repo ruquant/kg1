@@ -241,7 +241,7 @@ where
     }
 
     fn mark_for_reboot(&mut self) -> Result<(), RuntimeError> {
-        todo!()
+        Ok(())
     }
 
     fn reveal_metadata(
