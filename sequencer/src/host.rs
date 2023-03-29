@@ -121,11 +121,26 @@ where
 
     fn store_read_slice<T: Path>(
         &self,
-        _path: &T,
-        _from_offset: usize,
-        _buffer: &mut [u8],
+        path: &T,
+        from_offset: usize,
+        buffer: &mut [u8],
     ) -> Result<usize, RuntimeError> {
-        todo!()
+        let path = std::str::from_utf8(path.as_bytes())
+            .map_err(|_| RuntimeError::HostErr(Error::StoreInvalidKey))?;
+
+        let res = self
+            .db
+            .read(path)
+            .map_err(|_| RuntimeError::HostErr(Error::GenericInvalidAccess))?;
+
+        match res {
+            Some(res) => {
+                let data = res.iter().skip(from_offset).copied().collect::<Vec<u8>>();
+                buffer.copy_from_slice(&data);
+                Ok(data.len())
+            }
+            None => Ok(0),
+        }
     }
 
     fn store_write<T: Path>(
@@ -263,7 +278,7 @@ where
     }
 
     fn reboot_left(&self) -> Result<u32, RuntimeError> {
-        todo!()
+        Ok(1000)
     }
 
     fn runtime_version(&self) -> Result<String, RuntimeError> {
