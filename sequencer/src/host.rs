@@ -147,8 +147,13 @@ where
         }
     }
 
-    fn store_delete<T: Path>(&mut self, _path: &T) -> Result<(), RuntimeError> {
-        todo!()
+    fn store_delete<T: Path>(&mut self, path: &T) -> Result<(), RuntimeError> {
+        let path = std::str::from_utf8(path.as_bytes())
+            .map_err(|_| RuntimeError::HostErr(Error::StoreInvalidKey))?;
+
+        self.db
+            .delete(path)
+            .map_err(|_| RuntimeError::HostErr(Error::GenericInvalidAccess))
     }
 
     fn store_count_subkeys<T: Path>(&self, prefix: &T) -> Result<i64, RuntimeError> {
