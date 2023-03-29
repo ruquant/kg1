@@ -112,14 +112,16 @@ impl Database for SledDatabase {
         match node {
             None => Ok(()),
             Some(node) => {
-                let Node { key, children, .. } = node;
-
-                // Deletes each children
-                for child_path in children {
-                    self.delete(&child_path)?;
+                for child in node.children {
+                    let path = if path == "/" {
+                        format!("/{}", child)
+                    } else {
+                        format!("{}/{}", path, child)
+                    };
+                    println!("deleting: {path}");
+                    self.delete(&path)?;
                 }
-
-                let _ = self.inner.remove(key).map_err(|_| DatabaseError::IO)?;
+                self.inner.remove(path).map_err(|_| DatabaseError::IO)?;
                 Ok(())
             }
         }
@@ -220,5 +222,24 @@ mod tests {
         assert_eq!(root_res, vec!["path"]);
         assert_eq!(path_res, vec!["sub"]);
         assert!(sub_res.is_empty());
+    }
+
+    #[test]
+    fn test_get_delete() {
+        let database = Db::default();
+        let database = database.as_ref();
+        let data = [0x01, 0x02, 0x03, 0x04];
+
+        let _ = database.write("/path/sub", &data).unwrap();
+        let _ = database.delete("/").unwrap();
+
+        let root_res = database.get_subkeys("/").unwrap();
+        let path_res = database.get_subkeys("/path").unwrap();
+        let sub_res = database.get_subkeys("/path/sub").unwrap();
+
+        let empty: Vec<String> = Vec::default();
+        assert_eq!(root_res, empty);
+        assert_eq!(path_res, empty);
+        assert_eq!(sub_res, empty);
     }
 }
