@@ -73,8 +73,21 @@ where
         Ok(self.inputs.pop_front())
     }
 
-    fn store_has<T: Path>(&self, _path: &T) -> Result<Option<ValueType>, RuntimeError> {
-        todo!()
+    fn store_has<T: Path>(&self, path: &T) -> Result<Option<ValueType>, RuntimeError> {
+        let path = std::str::from_utf8(path.as_bytes())
+            .map_err(|_| RuntimeError::HostErr(Error::StoreInvalidKey))?;
+        self.db
+            .read_node(path)
+            .map_err(|_| RuntimeError::HostErr(Error::GenericInvalidAccess))
+            .map(|node| match node {
+                None => None,
+                Some(node) => match (node.value(), node.children().is_empty()) {
+                    (None, true) => None,
+                    (None, false) => Some(ValueType::Subtree),
+                    (Some(_), true) => Some(ValueType::Value),
+                    (Some(_), false) => Some(ValueType::ValueWithSubtree),
+                },
+            })
     }
 
     fn store_read<T: Path>(
