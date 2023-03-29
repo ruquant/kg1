@@ -228,8 +228,16 @@ where
         todo!()
     }
 
-    fn store_value_size(&self, _path: &impl Path) -> Result<usize, RuntimeError> {
-        todo!()
+    fn store_value_size(&self, path: &impl Path) -> Result<usize, RuntimeError> {
+        let path = std::str::from_utf8(path.as_bytes())
+            .map_err(|_| RuntimeError::HostErr(Error::StoreInvalidKey))?;
+
+        let data = self
+            .db
+            .read(path)
+            .map_err(|_| RuntimeError::HostErr(Error::GenericInvalidAccess))?;
+
+        Ok(data.map(|data| data.len()).unwrap_or_default())
     }
 
     fn mark_for_reboot(&mut self) -> Result<(), RuntimeError> {
