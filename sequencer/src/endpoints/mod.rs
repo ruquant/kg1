@@ -3,6 +3,7 @@ use actix_web::{web, Scope};
 use crate::{database::Database, kernel::Kernel};
 
 mod get_durable_state;
+mod get_subkeys;
 mod post_operation;
 
 /// Exposes all the endpoint of the application
@@ -14,6 +15,7 @@ where
     web::scope("")
         .route("/operations", web::post().to(post_operation::endpoint::<D>))
         .route("/state", web::get().to(get_durable_state::endpoint::<D>))
+        .route("/subkeys", web::get().to(get_subkeys::endpoint::<D>))
 }
 
 #[cfg(test)]
@@ -151,5 +153,51 @@ mod tests {
         let body = resp.into_body().try_into_bytes().unwrap().to_vec();
         let str = String::from_utf8(body).unwrap();
         assert_eq!("0000000000000002", str);
+    }
+
+    #[actix_web::test]
+    async fn test_get_subkeys_empty() {
+        let db = Db::default();
+
+        let app = test::init_service(app(db.inner.clone())).await;
+        let req = test::TestRequest::with_uri("/subkeys?path=/")
+            .method(Method::GET)
+            .to_request();
+
+        let resp = test::call_service(&app, req).await;
+
+        let body = resp.into_body().try_into_bytes().unwrap().to_vec();
+        let response: Vec<String> =
+            serde_json::from_str(&String::from_utf8(body).unwrap()).unwrap();
+        let expeted: Vec<String> = Vec::default();
+
+        assert_eq!(response, expeted);
+    }
+
+    #[actix_web::test]
+    async fn test_get_one_subkey_empty() {
+        let db = Db::default();
+
+        let app = test::init_service(app(db.inner.clone())).await;
+
+        let req = test::TestRequest::with_uri("/operations")
+            .method(Method::POST)
+            .set_json(Body {
+                data: "01010101".to_string(),
+            })
+            .to_request();
+        let _ = test::call_service(&app, req).await;
+
+        let req = test::TestRequest::with_uri("/subkeys?path=/")
+            .method(Method::GET)
+            .to_request();
+        let resp = test::call_service(&app, req).await;
+
+        let body = resp.into_body().try_into_bytes().unwrap().to_vec();
+        let response: Vec<String> =
+            serde_json::from_str(&String::from_utf8(body).unwrap()).unwrap();
+        let expeted: Vec<String> = vec!["counter".to_string()];
+
+        assert_eq!(response, expeted);
     }
 }
