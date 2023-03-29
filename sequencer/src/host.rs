@@ -151,8 +151,20 @@ where
         todo!()
     }
 
-    fn store_count_subkeys<T: Path>(&self, _prefix: &T) -> Result<i64, RuntimeError> {
-        todo!()
+    fn store_count_subkeys<T: Path>(&self, prefix: &T) -> Result<i64, RuntimeError> {
+        let path = std::str::from_utf8(prefix.as_bytes())
+            .map_err(|_| RuntimeError::HostErr(Error::StoreInvalidKey))?;
+
+        let node = self
+            .db
+            .read_node(path)
+            .map_err(|_| RuntimeError::HostErr(Error::GenericInvalidAccess))?;
+
+        match node {
+            None => Err(RuntimeError::HostErr(Error::StoreNotANode)),
+            Some(node) => i64::try_from(node.children().len())
+                .map_err(|_| RuntimeError::HostErr(Error::GenericInvalidAccess)),
+        }
     }
 
     fn store_get_subkey<T: Path>(
