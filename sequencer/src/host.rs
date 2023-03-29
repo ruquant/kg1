@@ -196,10 +196,12 @@ where
 
     fn store_move(
         &mut self,
-        _from_path: &impl Path,
-        _to_path: &impl Path,
+        from_path: &impl Path,
+        to_path: &impl Path,
     ) -> Result<(), RuntimeError> {
-        todo!()
+        self.store_copy(from_path, to_path)?;
+        self.store_delete(from_path)?;
+        Ok(())
     }
 
     fn store_copy(
