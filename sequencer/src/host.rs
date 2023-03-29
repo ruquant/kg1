@@ -167,12 +167,26 @@ where
         }
     }
 
-    fn store_get_subkey<T: Path>(
-        &self,
-        _prefix: &T,
-        _index: i64,
-    ) -> Result<OwnedPath, RuntimeError> {
-        todo!()
+    fn store_get_subkey<T: Path>(&self, prefix: &T, index: i64) -> Result<OwnedPath, RuntimeError> {
+        let path = std::str::from_utf8(prefix.as_bytes())
+            .map_err(|_| RuntimeError::HostErr(Error::StoreInvalidKey))?;
+
+        let node = self
+            .db
+            .read_node(path)
+            .map_err(|_| RuntimeError::HostErr(Error::GenericInvalidAccess))?;
+
+        let index = usize::try_from(index)
+            .map_err(|_| RuntimeError::HostErr(Error::StoreInvalidSubkeyIndex))?;
+
+        match node {
+            None => Err(RuntimeError::HostErr(Error::StoreNotANode)),
+            Some(node) => match node.children().get::<usize>(index) {
+                Some(path) => OwnedPath::try_from(path.to_string())
+                    .map_err(|_| RuntimeError::HostErr(Error::StoreInvalidSubkeyIndex)),
+                None => Err(RuntimeError::HostErr(Error::StoreInvalidSubkeyIndex)),
+            },
+        }
     }
 
     fn store_move(
