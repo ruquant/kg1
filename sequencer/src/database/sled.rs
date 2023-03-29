@@ -1,7 +1,6 @@
 use std::collections::HashMap;
 
-use super::{Database, DatabaseError};
-use serde::{Deserialize, Serialize};
+use super::{Database, DatabaseError, Node};
 
 /// Database using sled
 #[derive(Clone)]
@@ -9,30 +8,11 @@ pub struct SledDatabase {
     inner: sled::Db,
 }
 
-#[derive(Serialize, Deserialize)]
-struct Node {
-    key: String,            // More convenient
-    value: Option<Vec<u8>>, // Sometime a node does not have any data
-    children: Vec<String>,
-}
-
 impl SledDatabase {
     /// Open a connection to the sled database
     pub fn new(path: &str) -> Self {
         let inner = sled::open(path).unwrap();
         Self { inner }
-    }
-
-    fn read_node(&self, path: &str) -> Result<Option<Node>, DatabaseError> {
-        let res = self.inner.get(path).map_err(|_| DatabaseError::IO)?;
-        match res {
-            None => Ok(None),
-            Some(bytes) => {
-                let node =
-                    bincode::deserialize(&bytes).map_err(|_| DatabaseError::EncodingError)?;
-                Ok(Some(node))
-            }
-        }
     }
 
     fn write_node<'a>(&self, node: &'a Node) -> Result<&'a Node, DatabaseError> {
@@ -141,6 +121,18 @@ impl Database for SledDatabase {
 
                 let _ = self.inner.remove(key).map_err(|_| DatabaseError::IO)?;
                 Ok(())
+            }
+        }
+    }
+
+    fn read_node(&self, path: &str) -> Result<Option<Node>, DatabaseError> {
+        let res = self.inner.get(path).map_err(|_| DatabaseError::IO)?;
+        match res {
+            None => Ok(None),
+            Some(bytes) => {
+                let node =
+                    bincode::deserialize(&bytes).map_err(|_| DatabaseError::EncodingError)?;
+                Ok(Some(node))
             }
         }
     }
