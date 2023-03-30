@@ -6,13 +6,15 @@ use actix_web::{
 use database::{sled::SledDatabase, Database};
 use endpoints::service;
 use kernel::DummyKernel;
+use sequencer::Seq;
 
 mod database;
 mod endpoints;
 mod host;
 mod kernel;
+mod sequencer;
 
-fn app<D: Database + 'static>(
+fn app<D: Database + Send + 'static>(
     db: D,
 ) -> App<
     impl ServiceFactory<
@@ -23,11 +25,13 @@ fn app<D: Database + 'static>(
         InitError = (),
     >,
 > {
-    let db_state = Data::new(db);
+    let sequencer = Seq::new::<DummyKernel>(db);
+
+    let db_state = Data::new(sequencer);
 
     App::new()
         .app_data(db_state)
-        .service(service::<DummyKernel, SledDatabase>())
+        .service(service::<SledDatabase>())
 }
 
 #[actix_web::main]

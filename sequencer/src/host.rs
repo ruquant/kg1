@@ -14,8 +14,6 @@ where
     D: Database,
 {
     inputs: VecDeque<Message>,
-    level: u32,
-    id: u32,
     db: D,
 }
 
@@ -26,8 +24,6 @@ where
     pub fn new(db: D) -> Self {
         NativeHost {
             inputs: VecDeque::default(),
-            level: 0,
-            id: 0,
             db,
         }
     }
@@ -42,17 +38,15 @@ pub fn check_data_size(data: &[u8]) -> Result<&[u8], RuntimeError> {
         .map(|_| data)
 }
 
-pub trait AddInput {
-    fn add_input(&mut self, input: Vec<u8>);
+pub trait Host<D: Database>: Runtime {
+    fn add_message(&mut self, msg: Message);
 }
 
-impl<D> AddInput for NativeHost<D>
+impl<D> Host<D> for NativeHost<D>
 where
     D: Database,
 {
-    fn add_input(&mut self, input: Vec<u8>) {
-        let msg = Message::new(self.level, self.id, input);
-        self.id += 1;
+    fn add_message(&mut self, msg: Message) {
         self.inputs.push_back(msg);
     }
 }
