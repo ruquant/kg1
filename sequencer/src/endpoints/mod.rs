@@ -1,16 +1,15 @@
 use actix_web::{web, Scope};
 
-use crate::{database::Database, kernel::Kernel};
+use crate::database::Database;
 
 mod get_durable_state;
 mod get_subkeys;
 mod post_operation;
 
 /// Exposes all the endpoint of the application
-pub fn service<K, D>() -> Scope
+pub fn service<D>() -> Scope
 where
-    K: Kernel,
-    D: Database + 'static,
+    D: Database + Send + 'static,
 {
     web::scope("")
         .route("/operations", web::post().to(post_operation::endpoint::<D>))

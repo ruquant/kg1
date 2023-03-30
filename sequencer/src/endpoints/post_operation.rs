@@ -1,14 +1,9 @@
+use crate::{database::Database, sequencer::Seq};
 use actix_web::{
     web::{Data, Json},
     Responder,
 };
 use serde::{Deserialize, Serialize};
-
-use crate::{
-    database::Database,
-    host::{AddInput, NativeHost},
-    kernel::{DummyKernel, Kernel},
-};
 
 #[derive(Deserialize, Serialize)]
 pub struct Body {
@@ -16,17 +11,14 @@ pub struct Body {
 }
 
 /// Endpoint to dubmit a L2 operation to the sequencer
-pub async fn endpoint<D: Database>(body: Json<Body>, db: Data<D>) -> impl Responder {
+pub async fn endpoint<D: Database + Send + 'static>(
+    body: Json<Body>,
+    seq: Data<Seq<D>>,
+) -> impl Responder {
     // Check the body
     let data = hex::decode(&body.data).unwrap();
-    let db = db.as_ref().clone();
 
-    println!("Operation has been submitted to the sequencer");
+    seq.as_ref().add_operation(data).await;
 
-    let mut host = NativeHost::<D>::new(db);
-
-    host.add_input(data);
-
-    DummyKernel::entry(&mut host);
     "Operation submitted"
 }
