@@ -1,8 +1,6 @@
 extern crate alloc;
 
 use tezos_smart_rollup_debug::debug_msg;
-use tezos_smart_rollup_encoding::inbox::InboxMessage;
-use tezos_smart_rollup_encoding::michelson::MichelsonUnit;
 use tezos_smart_rollup_entrypoint::kernel_entry;
 use tezos_smart_rollup_host::runtime::Runtime;
 

@@ -17,6 +17,9 @@ args = ["fmt", "--", "--check"]
 command = "cargo"
 args = ["build", "--release","--target", "wasm32-unknown-unknown"]
 
+[tasks.wasm-strip]
+command = "echo 'FIXME: use wasm-strip'"
+
 [tasks.test]
 workspace = false
 command = "cargo"
