@@ -3,6 +3,7 @@
 members = [
     "00_debug_kernel",
     "01_storage_kernel",
+    "02_reboot_kernel",
     "02_inbox_kernel",
     "03_filtering_kernel",
     "04_outbox_kernel",
