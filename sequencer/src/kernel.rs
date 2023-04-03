@@ -18,6 +18,8 @@ mod external_kernel {
         Error,
     };
 
+    const MAGIC_BYTE: u8 = 0x88;
+
     const COUNTER_PATH: RefPath = RefPath::assert_from(b"/counter");
 
     #[derive(Default)]
@@ -61,11 +63,17 @@ mod external_kernel {
         loop {
             let input = host.read_input();
             match input {
-                Ok(Some(_)) => {
-                    host.write_debug("A message has been received");
-                    let counter = read_counter(host).unwrap().unwrap_or_default();
-                    let counter = counter.increment();
-                    let () = write_counter(host, &counter).unwrap();
+                Ok(Some(msg)) => {
+                    let payload = msg.as_ref();
+                    match payload[..] {
+                        [0x01, MAGIC_BYTE, ..] => {
+                            host.write_debug("A message has been received");
+                            let counter = read_counter(host).unwrap().unwrap_or_default();
+                            let counter = counter.increment();
+                            let () = write_counter(host, &counter).unwrap();
+                        }
+                        _ => {}
+                    }
                 }
                 Ok(None) => {
                     host.write_debug("End of the inbox");

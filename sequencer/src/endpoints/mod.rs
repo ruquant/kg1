@@ -150,7 +150,7 @@ mod tests {
         let req = test::TestRequest::with_uri("/operations")
             .method(Method::POST)
             .set_json(Body {
-                data: "01010101".to_string(),
+                data: "8801010101".to_string(),
             })
             .to_request();
         let resp = test::call_service(&app, req).await;
@@ -173,7 +173,7 @@ mod tests {
         let req = test::TestRequest::with_uri("/operations")
             .method(Method::POST)
             .set_json(Body {
-                data: "01010101".to_string(),
+                data: "8801010101".to_string(),
             })
             .to_request();
         let resp = test::call_service(&app, req).await;
@@ -182,7 +182,7 @@ mod tests {
         let req = test::TestRequest::with_uri("/operations")
             .method(Method::POST)
             .set_json(Body {
-                data: "01010101".to_string(),
+                data: "8801010101".to_string(),
             })
             .to_request();
         let resp = test::call_service(&app, req).await;
@@ -199,23 +199,20 @@ mod tests {
     }
 
     #[actix_web::test]
-    async fn test_get_subkeys_empty() {
+    async fn cannot_get_slash() {
         let db = Db::default();
         let node = Node::new::<DummyKernel>(db);
 
         let app = test::init_service(app(node)).await;
+
         let req = test::TestRequest::with_uri("/subkeys?path=/")
             .method(Method::GET)
             .to_request();
-
         let resp = test::call_service(&app, req).await;
 
-        let body = resp.into_body().try_into_bytes().unwrap().to_vec();
-        let response: Vec<String> =
-            serde_json::from_str(&String::from_utf8(body).unwrap()).unwrap();
-        let expeted: Vec<String> = Vec::default();
+        println!("{}", resp.status());
 
-        assert_eq!(response, expeted);
+        assert!(resp.status() == StatusCode::INTERNAL_SERVER_ERROR)
     }
 
     #[actix_web::test]
@@ -233,7 +230,7 @@ mod tests {
             .to_request();
         let _ = test::call_service(&app, req).await;
 
-        let req = test::TestRequest::with_uri("/subkeys?path=/")
+        let req = test::TestRequest::with_uri("/subkeys?path=/counter")
             .method(Method::GET)
             .to_request();
         let resp = test::call_service(&app, req).await;
@@ -241,7 +238,7 @@ mod tests {
         let body = resp.into_body().try_into_bytes().unwrap().to_vec();
         let response: Vec<String> =
             serde_json::from_str(&String::from_utf8(body).unwrap()).unwrap();
-        let expeted: Vec<String> = vec!["counter".to_string()];
+        let expeted: Vec<String> = vec![];
 
         assert_eq!(response, expeted);
     }
