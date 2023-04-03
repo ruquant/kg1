@@ -2,7 +2,7 @@ use std::marker::PhantomData;
 
 use tezos_smart_rollup_host::input::Message;
 
-use crate::{database::Database, host::Host, kernel::Kernel};
+use crate::{database::Database, host::Host, kernel::Kernel, node::TezosHeader};
 
 pub struct LowLatency<K, H, D>
 where
@@ -37,5 +37,14 @@ where
 
         // Execute the kernel with the host
         K::entry(&mut self.host);
+    }
+
+    pub(crate) fn on_tezos_header(&mut self, _header: &TezosHeader)
+    where
+        D: Database + Send + 'static,
+        K: Kernel,
+        H: Host<D>,
+    {
+        println!("TODO: simulate the end of level and the two first message of the inbox")
     }
 }

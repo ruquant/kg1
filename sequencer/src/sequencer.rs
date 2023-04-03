@@ -1,5 +1,7 @@
 use tezos_smart_rollup_host::input::Message;
 
+use crate::node::TezosHeader;
+
 pub struct Sequencer {
     tezos_level: u32,
     batch: Vec<Vec<u8>>,
@@ -22,5 +24,12 @@ impl Sequencer {
         self.batch.push(payload);
 
         msg
+    }
+
+    pub fn on_tezos_header(&mut self, header: &TezosHeader) -> Vec<Vec<u8>> {
+        self.tezos_level = header.level;
+        let batch = self.batch.clone();
+        self.batch = Vec::default();
+        batch
     }
 }
