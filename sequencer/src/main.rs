@@ -17,7 +17,7 @@ mod node;
 mod sequencer;
 
 fn app<D: Database + Send + 'static>(
-    db: D,
+    node: Node<D>,
 ) -> App<
     impl ServiceFactory<
         ServiceRequest,
@@ -27,13 +27,9 @@ fn app<D: Database + Send + 'static>(
         InitError = (),
     >,
 > {
-    let sequencer = Node::new::<DummyKernel>(db);
+    let state = Data::new(node);
 
-    let db_state = Data::new(sequencer);
-
-    App::new()
-        .app_data(db_state)
-        .service(service::<SledDatabase>())
+    App::new().app_data(state).service(service::<D>())
 }
 
 #[actix_web::main]
@@ -44,7 +40,9 @@ async fn main() -> std::io::Result<()> {
 
     let db = SledDatabase::new(db_uri);
 
-    HttpServer::new(move || app(db.clone()))
+    let node = Node::new::<DummyKernel>(db);
+
+    HttpServer::new(move || app(node.clone()))
         .bind((address, port))?
         .run()
         .await

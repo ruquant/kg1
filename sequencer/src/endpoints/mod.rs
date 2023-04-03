@@ -20,7 +20,12 @@ where
 #[cfg(test)]
 mod tests {
     use super::post_operation::Body;
-    use crate::{app, database::sled::SledDatabase};
+    use crate::{
+        app,
+        database::{sled::SledDatabase, Database},
+        kernel::DummyKernel,
+        node::Node,
+    };
     use actix_web::{
         body::MessageBody,
         http::{Method, StatusCode},
@@ -28,6 +33,7 @@ mod tests {
     };
     use std::fs;
 
+    #[derive(Clone)]
     struct Db {
         inner: SledDatabase,
         path: String,
@@ -47,11 +53,45 @@ mod tests {
         }
     }
 
+    impl Database for Db {
+        fn write<'a>(
+            &self,
+            path: &str,
+            data: &'a [u8],
+        ) -> Result<&'a [u8], crate::database::DatabaseError> {
+            self.inner.write(path, data)
+        }
+
+        fn read(&self, path: &str) -> Result<Option<Vec<u8>>, crate::database::DatabaseError> {
+            self.inner.read(path)
+        }
+
+        fn get_subkeys(&self, path: &str) -> Result<Vec<String>, crate::database::DatabaseError> {
+            self.inner.get_subkeys(path)
+        }
+
+        fn delete(&self, path: &str) -> Result<(), crate::database::DatabaseError> {
+            self.inner.delete(path)
+        }
+
+        fn read_node(
+            &self,
+            path: &str,
+        ) -> Result<Option<crate::database::Node>, crate::database::DatabaseError> {
+            self.inner.read_node(path)
+        }
+
+        fn copy(&self, from: &str, to: &str) -> Result<(), crate::database::DatabaseError> {
+            self.inner.copy(from, to)
+        }
+    }
+
     #[actix_web::test]
     async fn test_post_operation_content() {
         let db = Db::default();
+        let node = Node::new::<DummyKernel>(db);
 
-        let app = test::init_service(app(db.inner.clone())).await;
+        let app = test::init_service(app(node)).await;
         let req = test::TestRequest::with_uri("/operations")
             .method(Method::POST)
             .set_json(Body {
@@ -70,8 +110,9 @@ mod tests {
     #[actix_web::test]
     async fn test_post_operation_status() {
         let db = Db::default();
+        let node = Node::new::<DummyKernel>(db);
 
-        let app = test::init_service(app(db.inner.clone())).await;
+        let app = test::init_service(app(node)).await;
         let req = test::TestRequest::with_uri("/operations")
             .method(Method::POST)
             .set_json(Body {
@@ -87,8 +128,9 @@ mod tests {
     #[actix_web::test]
     async fn test_get_state_404() {
         let db = Db::default();
+        let node = Node::new::<DummyKernel>(db);
 
-        let app = test::init_service(app(db.inner.clone())).await;
+        let app = test::init_service(app(node)).await;
 
         let req = test::TestRequest::with_uri(&format!("/state?path=/foo"))
             .method(Method::GET)
@@ -101,8 +143,9 @@ mod tests {
     #[actix_web::test]
     async fn test_get_state_ok() {
         let db = Db::default();
+        let node = Node::new::<DummyKernel>(db);
 
-        let app = test::init_service(app(db.inner.clone())).await;
+        let app = test::init_service(app(node)).await;
 
         let req = test::TestRequest::with_uri("/operations")
             .method(Method::POST)
@@ -123,8 +166,9 @@ mod tests {
     #[actix_web::test]
     async fn test_get_state_value() {
         let db = Db::default();
+        let node = Node::new::<DummyKernel>(db);
 
-        let app = test::init_service(app(db.inner.clone())).await;
+        let app = test::init_service(app(node)).await;
 
         let req = test::TestRequest::with_uri("/operations")
             .method(Method::POST)
@@ -157,8 +201,9 @@ mod tests {
     #[actix_web::test]
     async fn test_get_subkeys_empty() {
         let db = Db::default();
+        let node = Node::new::<DummyKernel>(db);
 
-        let app = test::init_service(app(db.inner.clone())).await;
+        let app = test::init_service(app(node)).await;
         let req = test::TestRequest::with_uri("/subkeys?path=/")
             .method(Method::GET)
             .to_request();
@@ -176,8 +221,9 @@ mod tests {
     #[actix_web::test]
     async fn test_get_one_subkey_empty() {
         let db = Db::default();
+        let node = Node::new::<DummyKernel>(db);
 
-        let app = test::init_service(app(db.inner.clone())).await;
+        let app = test::init_service(app(node)).await;
 
         let req = test::TestRequest::with_uri("/operations")
             .method(Method::POST)
