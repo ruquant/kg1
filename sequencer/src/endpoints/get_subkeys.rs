@@ -5,7 +5,7 @@ use actix_web::{
 };
 use serde::{Deserialize, Serialize};
 
-use crate::{database::Database, sequencer::Seq};
+use crate::{database::Database, node::Node};
 
 #[derive(Deserialize, Serialize)]
 pub struct Path {
@@ -14,7 +14,7 @@ pub struct Path {
 
 pub async fn endpoint<D: Database + Send + 'static>(
     query: Query<Path>,
-    seq: Data<Seq<D>>,
+    seq: Data<Node<D>>,
 ) -> impl Responder {
     let res = seq.as_ref().get_subkeys(&query.path);
     match res {

@@ -1,4 +1,4 @@
-use crate::{database::Database, sequencer::Seq};
+use crate::{database::Database, node::Node};
 use actix_web::{
     web::{Data, Json},
     Responder,
@@ -13,7 +13,7 @@ pub struct Body {
 /// Endpoint to dubmit a L2 operation to the sequencer
 pub async fn endpoint<D: Database + Send + 'static>(
     body: Json<Body>,
-    seq: Data<Seq<D>>,
+    seq: Data<Node<D>>,
 ) -> impl Responder {
     // Check the body
     let data = hex::decode(&body.data).unwrap();
