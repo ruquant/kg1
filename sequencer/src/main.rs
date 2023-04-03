@@ -15,6 +15,7 @@ mod kernel;
 mod low_latency;
 mod node;
 mod sequencer;
+mod tezos_listener;
 
 fn app<D: Database + Send + 'static>(
     node: Node<D>,

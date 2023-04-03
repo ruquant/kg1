@@ -1,3 +1,4 @@
+use serde::Deserialize;
 use tokio::sync::{
     mpsc::{self, Sender},
     oneshot,
@@ -9,10 +10,12 @@ use crate::{
     kernel::Kernel,
     low_latency::LowLatency,
     sequencer::Sequencer,
+    tezos_listener::TezosListener,
 };
 
 //// The queue thing....
 
+#[derive(Clone)]
 pub struct Node<D>
 where
     D: Database,
@@ -21,13 +24,21 @@ where
     tx: Sender<QueueMsg>,
 }
 
-enum QueueContent {
-    Message(Vec<u8>),
+#[derive(Deserialize)]
+pub struct TezosHeader {
+    pub hash: String,
+    pub level: u64,
+    pub predecessor: String,
 }
 
-struct QueueMsg {
-    promise: oneshot::Sender<()>,
-    content: QueueContent,
+pub enum QueueContent {
+    Message(Vec<u8>),
+    TezosHeader(TezosHeader),
+}
+
+pub struct QueueMsg {
+    pub promise: Option<oneshot::Sender<()>>,
+    pub content: QueueContent,
 }
 
 impl<D> Node<D>
@@ -54,16 +65,22 @@ where
                     None => running = false,
                     Some(msg) => {
                         let QueueMsg { promise, content } = msg;
-                        let _ = promise.send(());
+                        if let Some(promise) = promise {
+                            let _ = promise.send(());
+                        }
+
                         match content {
                             QueueContent::Message(msg) => {
                                 Node::on_operation(&mut sequencer, &mut low_latency, msg)
                             }
+                            QueueContent::TezosHeader(_) => println!("yolo"),
                         }
                     }
                 }
             }
         });
+
+        TezosListener::listen(tx.clone());
 
         Self { database, tx }
     }
@@ -101,7 +118,7 @@ where
     pub async fn add_operation(&self, operation: Vec<u8>) {
         let (tx, rx) = oneshot::channel::<()>();
         let msg = QueueMsg {
-            promise: tx,
+            promise: Some(tx),
             content: QueueContent::Message(operation),
         };
         let _ = self.tx.send(msg).await;
