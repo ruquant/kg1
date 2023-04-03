@@ -6,12 +6,14 @@ use actix_web::{
 use database::{sled::SledDatabase, Database};
 use endpoints::service;
 use kernel::DummyKernel;
-use sequencer::Seq;
+use node::Node;
 
 mod database;
 mod endpoints;
 mod host;
 mod kernel;
+mod low_latency;
+mod node;
 mod sequencer;
 
 fn app<D: Database + Send + 'static>(
@@ -25,7 +27,7 @@ fn app<D: Database + Send + 'static>(
         InitError = (),
     >,
 > {
-    let sequencer = Seq::new::<DummyKernel>(db);
+    let sequencer = Node::new::<DummyKernel>(db);
 
     let db_state = Data::new(sequencer);
 
