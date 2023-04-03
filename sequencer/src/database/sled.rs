@@ -237,6 +237,16 @@ mod tests {
     }
 
     #[test]
+    fn test_read_unknown() {
+        let database = Db::default();
+        let database = database.as_ref();
+        let res = database.read("/path");
+
+        assert!(res.is_ok());
+        assert!(res.unwrap().is_none());
+    }
+
+    #[test]
     fn test_delete() {
         let database = Db::default();
         let database = database.as_ref();

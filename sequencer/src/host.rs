@@ -109,7 +109,7 @@ where
                 Ok(data)
             }
             Err(_) => Err(RuntimeError::HostErr(Error::GenericInvalidAccess)),
-            Ok(None) => Err(RuntimeError::HostErr(Error::StoreNotANode)),
+            Ok(None) => Err(RuntimeError::PathNotFound),
         }
     }
 
