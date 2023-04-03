@@ -27,7 +27,7 @@ where
 #[derive(Deserialize)]
 pub struct TezosHeader {
     pub hash: String,
-    pub level: u64,
+    pub level: u32,
     pub predecessor: String,
 }
 
@@ -73,7 +73,9 @@ where
                             QueueContent::Message(msg) => {
                                 Node::on_operation(&mut sequencer, &mut low_latency, msg)
                             }
-                            QueueContent::TezosHeader(_) => println!("yolo"),
+                            QueueContent::TezosHeader(header) => {
+                                Node::on_tezos_header(&mut sequencer, &mut low_latency, &header)
+                            }
                         }
                     }
                 }
@@ -83,6 +85,26 @@ where
         TezosListener::listen(tx.clone());
 
         Self { database, tx }
+    }
+
+    /// When a new tezos block is produced this function is executed
+    ///
+    /// It will produce a batch of operation
+    /// Submit it to the rollup
+    /// Creates a new empty batch of the rollup
+    /// Simulates the message "end of level" of the kernel
+    /// Simulates the Start of level and Info per level of the kernel
+    fn on_tezos_header<K, H>(
+        sequencer: &mut Sequencer,
+        low_latency: &mut LowLatency<K, H, D>,
+        header: &TezosHeader,
+    ) where
+        K: Kernel,
+        H: Host<D>,
+    {
+        let _batch = sequencer.on_tezos_header(header);
+        low_latency.on_tezos_header(header);
+        // TODO: inject the batch
     }
 
     /// Process an operation
