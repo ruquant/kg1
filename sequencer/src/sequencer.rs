@@ -17,6 +17,13 @@ impl Sequencer {
 
     /// Add the operations to the current batch
     pub fn on_operation(&mut self, payload: Vec<u8>) -> Message {
+        let payload = {
+            let mut data = vec![0x01];
+            let mut payload = payload;
+            data.append(&mut payload);
+            data
+        };
+
         let index = self.batch.len().try_into().unwrap(); // TODO: should we increment the index by 2 ? (because of the SOL and IOL)
         let msg = Message::new(self.tezos_level, index, payload.clone());
 
