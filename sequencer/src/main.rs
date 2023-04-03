@@ -11,6 +11,7 @@ use node::Node;
 mod database;
 mod endpoints;
 mod host;
+mod injector;
 mod kernel;
 mod low_latency;
 mod node;

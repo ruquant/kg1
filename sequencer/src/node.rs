@@ -7,6 +7,7 @@ use tokio::sync::{
 use crate::{
     database::Database,
     host::{Host, NativeHost},
+    injector::Injector,
     kernel::Kernel,
     low_latency::LowLatency,
     sequencer::Sequencer,
@@ -56,6 +57,7 @@ where
         let mut sequencer = Sequencer::new();
         let host = NativeHost::new(db);
         let mut low_latency = LowLatency::<K, NativeHost<D>, D>::new(host);
+        let injector = Injector::new();
 
         tokio::spawn(async move {
             let mut running = true;
@@ -74,7 +76,13 @@ where
                                 Node::on_operation(&mut sequencer, &mut low_latency, msg)
                             }
                             QueueContent::TezosHeader(header) => {
-                                Node::on_tezos_header(&mut sequencer, &mut low_latency, &header)
+                                Node::on_tezos_header(
+                                    &mut sequencer,
+                                    &mut low_latency,
+                                    &injector,
+                                    &header,
+                                )
+                                .await
                             }
                         }
                     }
@@ -94,17 +102,18 @@ where
     /// Creates a new empty batch of the rollup
     /// Simulates the message "end of level" of the kernel
     /// Simulates the Start of level and Info per level of the kernel
-    fn on_tezos_header<K, H>(
+    async fn on_tezos_header<K, H>(
         sequencer: &mut Sequencer,
         low_latency: &mut LowLatency<K, H, D>,
+        injector: &Injector,
         header: &TezosHeader,
     ) where
         K: Kernel,
         H: Host<D>,
     {
-        let _batch = sequencer.on_tezos_header(header);
+        let batch = sequencer.on_tezos_header(header);
         low_latency.on_tezos_header(header);
-        // TODO: inject the batch
+        let _ = injector.inject(batch).await;
     }
 
     /// Process an operation
