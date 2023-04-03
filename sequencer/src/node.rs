@@ -139,6 +139,9 @@ where
 
     /// Get the subkeys of a given keys
     pub fn get_subkeys(&self, path: &str) -> Option<Vec<String>> {
+        if path == "/" {
+            return None;
+        }
         match self.database.get_subkeys(path) {
             Ok(value) => Some(value),
             _ => None,

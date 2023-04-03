@@ -44,6 +44,7 @@ mod external_kernel {
     pub fn read_counter<Host: Runtime>(host: &mut Host) -> Result<Option<Counter>, RuntimeError> {
         match host.store_read(&COUNTER_PATH, 0, 8) {
             Err(RuntimeError::HostErr(Error::StoreNotANode)) => Ok(None),
+            Err(RuntimeError::PathNotFound) => Ok(None),
             Err(err) => Err(err),
             Ok(bytes) => {
                 let bytes = bytes.try_into().unwrap();
