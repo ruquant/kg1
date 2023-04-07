@@ -7,7 +7,7 @@ pub struct TezosListener {}
 impl TezosListener {
     pub fn listen(sender: Sender<QueueMsg>) {
         tokio::spawn(async move {
-            let mut stream = reqwest::get("https://mainnet.tezos.marigold.dev/monitor/heads/main")
+            let mut stream = reqwest::get("http://localhost:18731/monitor/heads/main")
                 .await
                 .unwrap()
                 .bytes_stream();
