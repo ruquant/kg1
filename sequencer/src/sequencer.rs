@@ -17,15 +17,15 @@ impl Sequencer {
 
     /// Add the operations to the current batch
     pub fn on_operation(&mut self, payload: Vec<u8>) -> Message {
-        let payload = {
+        let message_payload = {
             let mut data = vec![0x01];
-            let mut payload = payload;
+            let mut payload = payload.clone();
             data.append(&mut payload);
             data
         };
 
         let index = self.batch.len().try_into().unwrap(); // TODO: should we increment the index by 2 ? (because of the SOL and IOL)
-        let msg = Message::new(self.tezos_level, index, payload.clone());
+        let msg = Message::new(self.tezos_level, index, message_payload);
 
         // Add the message to the batch
         self.batch.push(payload);
@@ -38,5 +38,34 @@ impl Sequencer {
         let batch = self.batch.clone();
         self.batch = Vec::default();
         batch
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::Sequencer;
+
+    #[test]
+    fn test_message_is_added() {
+        let mut sequencer = Sequencer::new();
+        let payload = vec![0x02, 0x03, 0x04];
+        let _ = sequencer.on_operation(payload);
+
+        assert_eq!(1, sequencer.batch.len())
+    }
+
+    #[test]
+    fn test_external_byte() {
+        let mut sequencer = Sequencer::new();
+        let payload = vec![0x02, 0x03, 0x04];
+        let msg = sequencer.on_operation(payload.clone());
+
+        let msg_payload = msg.as_ref();
+
+        assert_eq!(msg_payload[0], 0x01);
+        assert_eq!(
+            msg_payload.iter().skip(1).copied().collect::<Vec<u8>>(),
+            payload
+        );
     }
 }
