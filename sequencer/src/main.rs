@@ -1,4 +1,6 @@
+use actix_cors::Cors;
 use actix_web::{
+    body::{BoxBody, EitherBody},
     dev::{ServiceFactory, ServiceRequest, ServiceResponse},
     web::Data,
     App, Error, HttpServer,
@@ -24,14 +26,21 @@ fn app<D: Database + Send + 'static>(
     impl ServiceFactory<
         ServiceRequest,
         Config = (),
-        Response = ServiceResponse,
+        Response = ServiceResponse<EitherBody<BoxBody>>,
         Error = Error,
         InitError = (),
     >,
 > {
     let state = Data::new(node);
 
-    App::new().app_data(state).service(service::<D>())
+    let cors = Cors::default()
+        .allow_any_header()
+        .allow_any_method()
+        .allow_any_origin();
+    App::new()
+        .wrap(cors)
+        .app_data(state)
+        .service(service::<D>())
 }
 
 #[actix_web::main]
