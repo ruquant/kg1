@@ -33,7 +33,7 @@
     in {
       packages = {inherit outbox-daemon;};
       devShell = pkgs.mkShell {
-        inputsFrom = [outbox-daemon];
+        # inputsFrom = [outbox-daemon];
         shellHook = ''
           export CC=$(which clang)
         '';
@@ -43,7 +43,7 @@
           rust-analyzer
           wabt
           clang
-          tezos.packages.${system}.trunk-octez-smart-rollup-wasm-debugger
+          # tezos.packages.${system}.trunk-octez-smart-rollup-wasm-debugger
           
           cargo-make
 
