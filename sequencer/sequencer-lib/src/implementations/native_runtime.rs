@@ -7,9 +7,9 @@ use tezos_smart_rollup_host::{
     Error,
 };
 
-use crate::database::Database;
+use crate::core::Database;
 
-pub struct NativeHost<D>
+pub struct NativeRuntime<D>
 where
     D: Database,
 {
@@ -17,12 +17,12 @@ where
     db: D,
 }
 
-impl<D> NativeHost<D>
+impl<D> NativeRuntime<D>
 where
     D: Database,
 {
     pub fn new(db: D) -> Self {
-        NativeHost {
+        NativeRuntime {
             inputs: VecDeque::default(),
             db,
         }
@@ -42,7 +42,7 @@ pub trait Host<D: Database>: Runtime {
     fn add_message(&mut self, msg: Message);
 }
 
-impl<D> Host<D> for NativeHost<D>
+impl<D> Host<D> for NativeRuntime<D>
 where
     D: Database,
 {
@@ -51,7 +51,7 @@ where
     }
 }
 
-impl<D> Runtime for NativeHost<D>
+impl<D> Runtime for NativeRuntime<D>
 where
     D: Database,
 {
@@ -90,7 +90,7 @@ where
         from_offset: usize,
         max_bytes: usize,
     ) -> Result<Vec<u8>, RuntimeError> {
-        let NativeHost { db, .. } = self;
+        let NativeRuntime { db, .. } = self;
         let path = std::str::from_utf8(path.as_bytes())
             .map_err(|_| RuntimeError::HostErr(Error::StoreInvalidKey))?;
 
@@ -143,7 +143,7 @@ where
         src: &[u8],
         at_offset: usize,
     ) -> Result<(), RuntimeError> {
-        let NativeHost { db, .. } = self;
+        let NativeRuntime { db, .. } = self;
         let path = std::str::from_utf8(path.as_bytes())
             .map_err(|_| RuntimeError::HostErr(Error::StoreInvalidKey))?;
 
@@ -181,7 +181,11 @@ where
         }
     }
 
-    fn store_get_subkey<T: Path>(&self, prefix: &T, index: i64) -> Result<OwnedPath, RuntimeError> {
+    fn store_get_subkey<T: Path>(
+        &self,
+        prefix: &T,
+        index: i64,
+    ) -> Result<Option<OwnedPath>, RuntimeError> {
         let path = std::str::from_utf8(prefix.as_bytes())
             .map_err(|_| RuntimeError::HostErr(Error::StoreInvalidKey))?;
 
@@ -197,7 +201,8 @@ where
             None => Err(RuntimeError::HostErr(Error::StoreNotANode)),
             Some(node) => match node.children().get::<usize>(index) {
                 Some(path) => OwnedPath::try_from(path.to_string())
-                    .map_err(|_| RuntimeError::HostErr(Error::StoreInvalidSubkeyIndex)),
+                    .map_err(|_| RuntimeError::HostErr(Error::StoreInvalidSubkeyIndex))
+                    .map(Some),
                 None => Err(RuntimeError::HostErr(Error::StoreInvalidSubkeyIndex)),
             },
         }

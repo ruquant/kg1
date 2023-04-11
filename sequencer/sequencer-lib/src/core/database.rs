@@ -1,7 +1,5 @@
 use serde::{Deserialize, Serialize};
 
-pub mod sled;
-
 #[derive(Debug)]
 pub enum DatabaseError {
     EncodingError,
@@ -9,13 +7,31 @@ pub enum DatabaseError {
 }
 
 #[derive(Serialize, Deserialize)]
-pub struct Node {
-    key: String,            // More convenient
-    value: Option<Vec<u8>>, // Sometime a node does not have any data
-    children: Vec<String>,  // Array of subkeys
+pub struct TreeNode {
+    pub key: String,            // More convenient
+    pub value: Option<Vec<u8>>, // Sometime a node does not have any data
+    pub children: Vec<String>,  // Array of subkeys
 }
 
-/// The database should act ha a tree
+impl TreeNode {
+    /// Get the children of the node
+    pub fn children(&self) -> Vec<String> {
+        self.children.to_vec()
+    }
+
+    /// Get the value of the node
+    pub fn value(&self) -> Option<Vec<u8>> {
+        match &self.value {
+            Some(value) => Some(value.clone()),
+            None => None,
+        }
+    }
+
+    pub fn key(&self) -> String {
+        self.key.clone()
+    }
+}
+
 pub trait Database: Clone {
     /// Write the given data to the given path
     fn write<'a>(&self, path: &str, data: &'a [u8]) -> Result<&'a [u8], DatabaseError>;
@@ -32,20 +48,8 @@ pub trait Database: Clone {
     fn delete(&self, path: &str) -> Result<(), DatabaseError>;
 
     /// Read a node
-    fn read_node(&self, path: &str) -> Result<Option<Node>, DatabaseError>;
+    fn read_node(&self, path: &str) -> Result<Option<TreeNode>, DatabaseError>;
 
     /// Copy a node to a new path
     fn copy(&self, from: &str, to: &str) -> Result<(), DatabaseError>;
-}
-
-impl Node {
-    /// Get the children of the node
-    pub fn children(&self) -> Vec<String> {
-        self.children.to_vec()
-    }
-
-    /// Get the value of the node
-    pub fn value(&self) -> &Option<Vec<u8>> {
-        &self.value
-    }
 }
