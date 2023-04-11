@@ -1,5 +1,7 @@
 [env]
 CARGO_MAKE_EXTEND_WORKSPACE_MAKEFILE = true
+# required for the compilation of 09_tzwitter_app
+TZWITTER_L1_CONTRACT= "KT1000"
 
 [tasks.clean]
 command = "cargo"
