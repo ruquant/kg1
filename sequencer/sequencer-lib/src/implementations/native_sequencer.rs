@@ -1,25 +1,26 @@
 use tezos_smart_rollup_host::input::Message;
 
-use crate::node::TezosHeader;
+use crate::core::TezosHeader;
 
-pub struct Sequencer {
+pub struct NativeSequencer {
     tezos_level: u32,
     batch: Vec<Vec<u8>>,
 }
 
-impl Sequencer {
+impl NativeSequencer {
     pub fn new() -> Self {
         Self {
             tezos_level: 0,
             batch: Vec::default(),
         }
     }
+}
 
-    /// Add the operations to the current batch
-    pub fn on_operation(&mut self, payload: Vec<u8>) -> Message {
+impl crate::core::Sequencer for NativeSequencer {
+    fn on_operation(&mut self, operation: Vec<u8>) -> Message {
         let message_payload = {
             let mut data = vec![0x01];
-            let mut payload = payload.clone();
+            let mut payload = operation.clone();
             data.append(&mut payload);
             data
         };
@@ -28,13 +29,13 @@ impl Sequencer {
         let msg = Message::new(self.tezos_level, index, message_payload);
 
         // Add the message to the batch
-        self.batch.push(payload);
+        self.batch.push(operation);
 
         msg
     }
 
-    pub fn on_tezos_header(&mut self, header: &TezosHeader) -> Vec<Vec<u8>> {
-        self.tezos_level = header.level;
+    fn on_tezos_header(&mut self, tezos_header: &TezosHeader) -> Vec<Vec<u8>> {
+        self.tezos_level = tezos_header.level;
         let batch = self.batch.clone();
         self.batch = Vec::default();
         batch
@@ -43,11 +44,11 @@ impl Sequencer {
 
 #[cfg(test)]
 mod tests {
-    use super::Sequencer;
+    use crate::{core::Sequencer, implementations::NativeSequencer};
 
     #[test]
     fn test_message_is_added() {
-        let mut sequencer = Sequencer::new();
+        let mut sequencer = NativeSequencer::new();
         let payload = vec![0x02, 0x03, 0x04];
         let _ = sequencer.on_operation(payload);
 
@@ -56,7 +57,7 @@ mod tests {
 
     #[test]
     fn test_external_byte() {
-        let mut sequencer = Sequencer::new();
+        let mut sequencer = NativeSequencer::new();
         let payload = vec![0x02, 0x03, 0x04];
         let msg = sequencer.on_operation(payload.clone());
 
