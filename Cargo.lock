@@ -256,6 +256,21 @@ dependencies = [
 ]
 
 [[package]]
+name = "filtering-kernel"
+version = "0.1.0"
+dependencies = [
+ "serde",
+ "tezos_data_encoding",
+ "tezos_smart_rollup_core",
+ "tezos_smart_rollup_debug",
+ "tezos_smart_rollup_encoding",
+ "tezos_smart_rollup_entrypoint",
+ "tezos_smart_rollup_host",
+ "tezos_smart_rollup_mock",
+ "tezos_smart_rollup_storage",
+]
+
+[[package]]
 name = "funty"
 version = "1.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"

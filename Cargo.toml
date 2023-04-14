@@ -4,6 +4,7 @@ members = [
     "00_debug_kernel",
     "01_storage_kernel",
     "02_inbox_kernel",
+    "03_filtering_kernel",
     "04_outbox_kernel",
     "0n_counter_kernel",
     "09_tzwitter_app/kernel"
