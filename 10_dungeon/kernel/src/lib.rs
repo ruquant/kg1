@@ -87,10 +87,6 @@ pub enum PlayerAction {
     MoveDown,
 }
 
-pub fn in_bounds(x: usize, y: usize) -> bool {
-    x < MAP_WIDTH && y < MAP_HEIGHT
-}
-
 impl State {
     pub fn new() -> Self {
         Self {
@@ -118,26 +114,6 @@ impl State {
     }
 }
 
-/*
-fn map_path() -> Result<OwnedPath, RuntimeError> {
-    // the path of the locations of the state in the rollup, it is a Merkle tree (filesystem path)
-    // RefPath, OwnedPath
-    OwnedPath::try_from("/state/map".to_string())
-        .map_err(|_| RuntimeError::HostErr(Error::StoreInvalidKey))
-}
-
-fn x_pos_path() -> Result<OwnedPath, RuntimeError> {
-    OwnedPath::try_from("/state/player/x_pos".to_string())
-        .map_err(|_| RuntimeError::HostErr(Error::StoreInvalidKey))
-}
-
-fn y_pos_path() -> Result<OwnedPath, RuntimeError> {
-    OwnedPath::try_from("/state/player/y_pos".to_string())
-        .map_err(|_| RuntimeError::HostErr(Error::StoreInvalidKey))
-}
-
-*/
-
 /// Read and write data from/to duable state of kernel, using the Runtime
 fn load_state<R: Runtime>(rt: &mut R) -> Result<State, RuntimeError> {
     // Check whether or not there is existing the state inside the path
@@ -146,10 +122,9 @@ fn load_state<R: Runtime>(rt: &mut R) -> Result<State, RuntimeError> {
     let x_pos_exists = rt.store_has(&X_POS_PATH);
     let y_pos_exists = rt.store_has(&Y_POS_PATH);
 
-    // we match them to check if they exist
+    // we match them to check if they exist in the storage
     match (map_exists, x_pos_exists, y_pos_exists) {
         (Ok(None), Ok(None), Ok(None)) => {
-            // create a new state
             let state = State::new();
             Ok(state)
         }
@@ -195,7 +170,7 @@ fn load_state<R: Runtime>(rt: &mut R) -> Result<State, RuntimeError> {
 // the udpate state is the opposite of the load_state, we need to convert
 // back the load_state
 fn update_state<R: Runtime>(rt: &mut R, state: &State) -> Result<(), RuntimeError> {
-    // convert map
+    // convert map from vector to bytes
     let tiles: Vec<u8> = state
         .map
         .tiles
@@ -206,16 +181,10 @@ fn update_state<R: Runtime>(rt: &mut R, state: &State) -> Result<(), RuntimeErro
         })
         .collect();
 
-    rt.write_debug("Saving map");
-    rt.write_debug(&format!(
-        "map size: {}, constant: {}",
-        tiles.len(),
-        MAP_WIDTH * MAP_HEIGHT
-    ));
     // start to write from 0
     let () = rt.store_write(&MAP_PATH, &tiles, 0)?;
-    rt.write_debug("map saved");
 
+    // convert vector back to bytes
     let x_pos = usize::to_be_bytes(state.player.x_pos);
     let () = rt.store_write(&X_POS_PATH, &x_pos, 0)?;
 
@@ -237,7 +206,8 @@ pub fn entry<R: Runtime>(rt: &mut R) {
                 // message is a list of byte
                 let bytes = message.as_ref();
                 let player_action = match bytes {
-                    // 0x00: internal, 0x01: external
+                    // First element or an array: 0x00: internal, 0x01: external
+                    // second element define the bytes of player action
                     // move up
                     [0x01, 0x01] => Some(PlayerAction::MoveUp),
                     // move down
@@ -250,22 +220,15 @@ pub fn entry<R: Runtime>(rt: &mut R) {
                 };
                 match player_action {
                     Some(player_action) => {
-                        rt.write_debug("Load state");
                         let state: Result<State, RuntimeError> = load_state(rt);
-                        rt.write_debug("Load state success");
                         // match the state
                         match state {
-                            Err(_) => {
-                                rt.write_debug("Load state failure");
-                            }
+                            Err(_) => {}
                             Ok(state) => {
-                                rt.write_debug("Moving the player");
                                 let next_state = state.transition(player_action);
                                 let res = update_state(rt, &next_state);
                                 match res {
-                                    Ok(_) => {
-                                        rt.write_debug("State is saved");
-                                    }
+                                    Ok(_) => {}
                                     Err(err) => {
                                         rt.write_debug(&format!("State is not saved: {:?}", err));
                                     }
