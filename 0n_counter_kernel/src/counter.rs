@@ -1,14 +1,8 @@
 use tezos_data_encoding::enc::BinWriter;
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, Default, PartialEq)]
 pub struct Counter {
     pub(crate) counter: i64,
-}
-
-impl Default for Counter {
-    fn default() -> Counter {
-        Counter { counter: 0 }
-    }
 }
 
 impl Counter {
@@ -37,9 +31,9 @@ impl TryFrom<Vec<u8>> for Counter {
     }
 }
 
-impl Into<[u8; 8]> for Counter {
-    fn into(self) -> [u8; 8] {
-        self.counter.to_be_bytes()
+impl From<Counter> for [u8; 8] {
+    fn from(value: Counter) -> Self {
+        value.counter.to_be_bytes()
     }
 }
 

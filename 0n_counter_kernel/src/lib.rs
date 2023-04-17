@@ -1,8 +1,5 @@
 extern crate alloc;
 
-use tezos_smart_rollup_debug::debug_msg;
-use tezos_smart_rollup_encoding::inbox::InboxMessage;
-use tezos_smart_rollup_encoding::michelson::MichelsonUnit;
 use tezos_smart_rollup_entrypoint::kernel_entry;
 use tezos_smart_rollup_host::runtime::Runtime;
 
@@ -47,7 +44,7 @@ fn execute<Host: Runtime>(host: &mut Host, counter: Counter) -> Counter {
     }
 }
 
-fn entry(host: &mut impl Runtime) {
+pub fn entry(host: &mut impl Runtime) {
     let counter_path: OwnedPath = "/counter".as_bytes().to_vec().try_into().unwrap();
     let counter = Runtime::store_read(host, &counter_path, 0, 8)
         .map_err(|_| "Runtime error".to_string())
@@ -58,7 +55,6 @@ fn entry(host: &mut impl Runtime) {
 
     let counter: [u8; 8] = counter.into();
     let _ = Runtime::store_write(host, &counter_path, &counter, 0);
-    host.mark_for_reboot().unwrap();
 }
 
 kernel_entry!(entry);
@@ -70,8 +66,14 @@ kernel_entry!(entry);
 // 'step result'
 // 'show key /counter'
 
+#[cfg(test)]
 mod test {
-    use super::*;
+    use tezos_smart_rollup_host::{path::OwnedPath, runtime::Runtime};
+
+    use crate::{
+        counter::{Counter, UserAction},
+        entry,
+    };
 
     #[test]
     fn test_counter() {
