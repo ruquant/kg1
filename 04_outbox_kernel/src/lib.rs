@@ -26,10 +26,10 @@ fn read_inbox_message<Expr: Michelson>(host: &mut impl Runtime, own_address: &Sm
                     match msg {
                         InternalInboxMessage::Transfer(m) => {
                             if m.destination.hash() == own_address {
-                                host.write_debug("Internal message: transfer for me\n");
+                                debug_msg!(host, "Internal message: transfer for me\n");
                                 write_outbox_message(host, m.payload);
                             } else {
-                                host.write_debug("Internal message: transfer not for me\n")
+                                debug_msg!(host, "Internal message: transfer not for me\n")
                             }
                         }
                         _ => (),

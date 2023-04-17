@@ -26,10 +26,10 @@ use stages::{
 fn step<R: Runtime>(host: &mut R, message: Message, level: u32) -> Result<()> {
     let public_key = message.public_key();
     let public_key_hash = PublicKeyHash::from(public_key);
-    host.write_debug("Message is deserialized\n");
+    debug_msg!(host, "Message is deserialized\n");
 
     let inner = verify_signature(message)?;
-    host.write_debug("Signature is correct\n");
+    debug_msg!(host, "Signature is correct\n");
 
     // Verify the nonce
     let account = read_account(host, public_key_hash)?;
@@ -82,10 +82,10 @@ fn execute<R: Runtime>(host: &mut R) -> Result<()> {
 }
 
 pub fn entry<R: Runtime>(host: &mut R) {
-    host.write_debug("Hello Kernel\n");
+    debug_msg!(host, "Hello Kernel\n");
     match execute(host) {
         Ok(_) => {}
-        Err(err) => host.write_debug(&err.to_string()),
+        Err(err) => debug_msg!(host, "{}", &err.to_string()),
     }
 }
 

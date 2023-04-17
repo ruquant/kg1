@@ -20,7 +20,7 @@ fn read_inbox_message<Expr: Michelson>(host: &mut impl Runtime) {
                 (remaining, InboxMessage::External([MAGIC_BYTE, data @ ..])) => {
                     assert!(remaining.is_empty());
                     let message = String::from_utf8_lossy(data);
-                    host.write_debug(&format!("External message: \"{}\"\n", message));
+                    debug_msg!(host, "External message: \"{}\"\n", message);
                 }
                 _ => (),
             }

@@ -11,7 +11,7 @@ fn read_inbox_message<Expr: Michelson>(host: &mut impl Runtime) {
         Err(_) | Ok(None) => (),
         Ok(Some(message)) => {
             // Show the inbox level of the message
-            host.write_debug(&format!("Inbox level: {} ", message.level.to_string()));
+            debug_msg!(host, "Inbox level: {} ", message.level.to_string());
             // Parse the payload of the message
             let parsed_msg = InboxMessage::<Expr>::parse(message.as_ref()).unwrap();
             match parsed_msg {
@@ -19,53 +19,33 @@ fn read_inbox_message<Expr: Michelson>(host: &mut impl Runtime) {
                     assert!(remaining.is_empty());
                     match msg {
                         InternalInboxMessage::StartOfLevel => {
-                            host.write_debug("Internal message: start of level\n")
+                            debug_msg!(host, "Internal message: start of level\n")
                         }
                         InternalInboxMessage::InfoPerLevel(info) => {
-                            host.write_debug(&format!(
+                            debug_msg!(
+                                host,
                                 "Internal message: level info \
                                           (block predecessor: {}, predecessor_timestamp: {}\n",
-                                info.predecessor, info.predecessor_timestamp
-                            ));
+                                info.predecessor,
+                                info.predecessor_timestamp
+                            );
                         }
                         InternalInboxMessage::EndOfLevel => {
-                            host.write_debug("Internal message: end of level\n")
+                            debug_msg!(host, "Internal message: end of level\n")
                         }
                         InternalInboxMessage::Transfer(_) => {
-                            host.write_debug("Internal message: transfer\n")
+                            debug_msg!(host, "Internal message: transfer\n")
                         }
                     }
                 }
                 (remaining, InboxMessage::External(msg)) => {
                     assert!(remaining.is_empty());
                     let message = String::from_utf8_lossy(&msg);
-                    host.write_debug(&format!("External message: \"{}\"\n", message));
+                    debug_msg!(host, "External message: \"{}\"\n", message);
                 }
             }
             // Continue as long as there are messages in the inbox
             read_inbox_message::<MichelsonUnit>(host);
-        }
-    }
-}
-
-fn read_inbox_message_direct(host: &mut impl Runtime) {
-    let input = host.read_input();
-    match input {
-        Err(_) | Ok(None) => (),
-        Ok(Some(message)) => {
-            let data = message.as_ref();
-            match data {
-                [0x00, ..] => {
-                    host.write_debug("Internal message\n");
-                }
-                [0x01, ..] => {
-                    let bytes: Vec<u8> = data.iter().skip(1).copied().collect();
-                    let message = String::from_utf8_lossy(&bytes);
-                    host.write_debug(&format!("External message: \"{}\"\n", message));
-                }
-                _ => (),
-            }
-            read_inbox_message_direct(host);
         }
     }
 }

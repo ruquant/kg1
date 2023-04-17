@@ -14,15 +14,15 @@ fn execute<Host: Runtime>(host: &mut Host, counter: Counter) -> Counter {
         Err(_) | Ok(None) => counter,
         Ok(Some(message)) => {
             // If there is a message let's process it.
-            host.write_debug("Hello message\n");
+            debug_msg!(host, "Hello message\n");
             let data = message.as_ref();
             match data {
                 [0x00, ..] => {
-                    host.write_debug("Message from the kernel.\n");
+                    debug_msg!(host, "Message from the kernel.\n");
                     execute(host, counter)
                 }
                 [0x01, ..] => {
-                    host.write_debug("Message from the user.\n");
+                    debug_msg!(host, "Message from the user.\n");
                     // Let's skip the first byte of the data to get what the user has sent.
                     let user_message: Vec<&u8> = data.iter().skip(1).collect();
                     // We are parsing the message from the user.
