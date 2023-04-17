@@ -40,7 +40,7 @@ class Tzwitter {
     const nonce = Number.parseInt(nonceBytes || '00000000', 16) + 1;
 
     // Hash the payload to sign it later
-    const strNonce = nonce.toString(16).padStart(8, '0');
+    const strNonce = nonce.toString(16).padStart(8, '0').toUpperCase();
     const publicKey = await this.signer.publicKey();
     const toHash = `${strNonce}${publicKeyHash}${tweet}`;
     console.log(toHash);
@@ -190,7 +190,7 @@ class Tzwitter {
     const nonce = Number.parseInt(nonceBytes || '00000000', 16) + 1;
 
     // Hash the payload to sign it later
-    const strNonce = nonce.toString(16).padStart(8, '0');
+    const strNonce = nonce.toString(16).padStart(8, '0').toUpperCase();
     const publicKey = await this.signer.publicKey();
     const toHash = `${strNonce}${tweetId}`;
     const hash = blake2bHex(toHash, undefined, 32);
@@ -230,7 +230,7 @@ class Tzwitter {
     const nonce = Number.parseInt(nonceBytes || '00000000', 16) + 1;
 
     // Hash the payload to sign it later
-    const strNonce = nonce.toString(16).padStart(8, '0');
+    const strNonce = nonce.toString(16).padStart(8, '0').toUpperCase();
     const publicKey = await this.signer.publicKey();
     const toHash = `${strNonce}${destination}${tweetId}`;
     const hash = blake2bHex(toHash, undefined, 32);
@@ -278,7 +278,7 @@ class Tzwitter {
     const nonce = Number.parseInt(nonceBytes || '00000000', 16) + 1;
 
     // Hash the payload to sign it later
-    const strNonce = nonce.toString(16).padStart(8, '0');
+    const strNonce = nonce.toString(16).padStart(8, '0').toUpperCase();
     const publicKey = await this.signer.publicKey();
     const toHash = `${strNonce}${tweetId}`;
     const hash = blake2bHex(toHash, undefined, 32);
