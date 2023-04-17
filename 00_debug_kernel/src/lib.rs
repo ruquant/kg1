@@ -1,8 +1,6 @@
 extern crate alloc;
 
 use tezos_smart_rollup_debug::debug_msg;
-use tezos_smart_rollup_encoding::inbox::InboxMessage;
-use tezos_smart_rollup_encoding::michelson::MichelsonUnit;
 use tezos_smart_rollup_entrypoint::kernel_entry;
 use tezos_smart_rollup_host::runtime::Runtime;
 
@@ -16,7 +14,7 @@ use tezos_smart_rollup_host::runtime::Runtime;
 /// and that inputs are handled appropriately. We'll cover some of these topics
 /// in coming examples, but we suggest having a look at the documentation as well:
 /// https://tezos.gitlab.io/mumbai/smart_rollups.html#developing-wasm-kernels
-fn entry(host: &mut impl Runtime) {
+pub fn entry(host: &mut impl Runtime) {
     // The `debug_msg!` macro prints messages that can be observed
     // when executing with the octez-smart-rollup-wasm-debugger binary.
     debug_msg!(host, "Hello from kernel!\n");
