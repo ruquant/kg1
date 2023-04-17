@@ -1,5 +1,4 @@
-use tezos_smart_rollup_host::path::*;
-use tezos_smart_rollup_host::runtime::Runtime;
+use tezos_smart_rollup::{prelude::*, storage::path::*};
 
 use crate::core::public_key_hash::PublicKeyHash;
 use crate::core::receipt::Receipt;

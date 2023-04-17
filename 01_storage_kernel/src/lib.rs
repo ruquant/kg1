@@ -1,8 +1,6 @@
 extern crate alloc;
 
-use tezos_smart_rollup_entrypoint::kernel_entry;
-use tezos_smart_rollup_host::path::OwnedPath;
-use tezos_smart_rollup_host::runtime::Runtime;
+use tezos_smart_rollup::{kernel_entry, prelude::*, storage::path::OwnedPath};
 
 // In this kernel, we'll demonstrate how to write from storage.
 // Additionally, we'll write a unit test that executes against the Mock Host
@@ -22,11 +20,12 @@ kernel_entry!(entry);
 // to simulate interactions and assert on the results.
 #[cfg(test)]
 mod test {
-    use super::*;
 
     #[test]
     fn test_storage() {
-        let mut host = tezos_smart_rollup_mock::MockHost::default();
+        use super::*;
+
+        let mut host = tezos_smart_rollup::testing::prelude::MockHost::default();
 
         let greeting_path: OwnedPath = "/greeting".as_bytes().to_vec().try_into().unwrap();
         host.run_level(entry);

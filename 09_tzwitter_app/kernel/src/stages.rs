@@ -15,13 +15,12 @@ use crate::{
 
 use num_bigint::ToBigInt;
 use tezos_data_encoding::{enc::BinWriter, types::Zarith};
-use tezos_smart_rollup_encoding::{
-    contract::Contract,
-    entrypoint::Entrypoint,
+use tezos_smart_rollup::{
     michelson::{MichelsonContract, MichelsonInt, MichelsonPair, MichelsonString},
     outbox::{OutboxMessage, OutboxMessageTransaction, OutboxMessageTransactionBatch},
+    prelude::*,
+    types::{Contract, Entrypoint},
 };
-use tezos_smart_rollup_host::runtime::Runtime;
 
 use crate::core::error::*;
 use crate::core::message::Message;

@@ -1,12 +1,10 @@
 extern crate alloc;
 
-use tezos_smart_rollup_entrypoint::kernel_entry;
-use tezos_smart_rollup_host::runtime::Runtime;
+use tezos_smart_rollup::{kernel_entry, prelude::*, storage::path::OwnedPath};
 
 mod counter;
 use counter::*;
 
-use tezos_smart_rollup_host::path::OwnedPath;
 fn execute<Host: Runtime>(host: &mut Host, counter: Counter) -> Counter {
     // Read the input
     let input = host.read_input();
@@ -65,10 +63,9 @@ kernel_entry!(entry);
 // 'load inputs'
 // 'step result'
 // 'show key /counter'
-
 #[cfg(test)]
 mod test {
-    use tezos_smart_rollup_host::{path::OwnedPath, runtime::Runtime};
+    use tezos_smart_rollup::{host::Runtime, storage::path::OwnedPath};
 
     use crate::{
         counter::{Counter, UserAction},
@@ -77,7 +74,7 @@ mod test {
 
     #[test]
     fn test_counter() {
-        let mut host = tezos_smart_rollup_mock::MockHost::default();
+        let mut host = tezos_smart_rollup::testing::prelude::MockHost::default();
 
         let counter_path: OwnedPath = "/counter".as_bytes().to_vec().try_into().unwrap();
         host.run_level(entry);

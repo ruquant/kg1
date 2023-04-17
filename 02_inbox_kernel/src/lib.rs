@@ -1,7 +1,9 @@
-use tezos_smart_rollup_encoding::inbox::{InboxMessage, InternalInboxMessage};
-use tezos_smart_rollup_encoding::michelson::{Michelson, MichelsonUnit};
-use tezos_smart_rollup_entrypoint::kernel_entry;
-use tezos_smart_rollup_host::runtime::Runtime;
+use tezos_smart_rollup::{
+    inbox::{InboxMessage, InternalInboxMessage},
+    kernel_entry,
+    michelson::{Michelson, MichelsonUnit},
+    prelude::*,
+};
 
 fn read_inbox_message<Expr: Michelson>(host: &mut impl Runtime) {
     let input = host.read_input();

@@ -7,12 +7,4 @@ edition = "2021"
 crate-type = ["cdylib", "lib"]
 
 [dependencies]
-serde = { version = "1.0", features = ["derive"] }
-tezos_data_encoding = {version = "0.4"}
-tezos_smart_rollup_core = { git = "https://gitlab.com/tezos/tezos" }
-tezos_smart_rollup_host = { git = "https://gitlab.com/tezos/tezos" }
-tezos_smart_rollup_debug = { git = "https://gitlab.com/tezos/tezos" }
-tezos_smart_rollup_encoding = { git = "https://gitlab.com/tezos/tezos" }
-tezos_smart_rollup_storage = { git = "https://gitlab.com/tezos/tezos" }
-tezos_smart_rollup_entrypoint = { git = "https://gitlab.com/tezos/tezos" }
-tezos_smart_rollup_mock = { git = "https://gitlab.com/tezos/tezos" }
+tezos-smart-rollup = { git = "https://gitlab.com/tezos/tezos" }

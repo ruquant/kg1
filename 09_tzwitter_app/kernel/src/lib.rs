@@ -4,8 +4,7 @@ use crate::core::receipt::Receipt;
 
 // src/lib.rs
 use storage::{read_account, store_account, store_receipt};
-use tezos_smart_rollup_entrypoint::kernel_entry;
-use tezos_smart_rollup_host::runtime::Runtime;
+use tezos_smart_rollup::{kernel_entry, prelude::*};
 
 mod constants;
 mod core;
@@ -96,8 +95,7 @@ kernel_entry!(entry);
 mod tests {
 
     use tezos_data_encoding::enc::BinWriter;
-    use tezos_smart_rollup_host::{path::RefPath, runtime::Runtime};
-    use tezos_smart_rollup_mock::MockHost;
+    use tezos_smart_rollup::{prelude::*, storage::path::RefPath, testing::prelude::MockHost};
 
     use crate::{
         constants::MAGIC_BYTE,

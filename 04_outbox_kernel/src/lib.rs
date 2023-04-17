@@ -1,15 +1,13 @@
 use tezos_crypto_rs::hash::SmartRollupHash;
-use tezos_smart_rollup_encoding::{
-    contract::Contract,
-    entrypoint::Entrypoint,
+use tezos_data_encoding::enc::BinWriter;
+use tezos_smart_rollup::{
     inbox::{InboxMessage, InternalInboxMessage},
+    kernel_entry,
     michelson::{Michelson, MichelsonInt},
     outbox::{OutboxMessage, OutboxMessageTransaction, OutboxMessageTransactionBatch},
+    prelude::*,
+    types::{Contract, Entrypoint},
 };
-use tezos_smart_rollup_entrypoint::kernel_entry;
-use tezos_smart_rollup_host::runtime::Runtime;
-
-use tezos_data_encoding::enc::BinWriter;
 
 // Read inbox messages, only looking at internal transfer messages directed to
 // this kernel's address. For each such message, write an outbox message
@@ -63,7 +61,7 @@ fn write_outbox_message<Expr: Michelson>(host: &mut impl Runtime, payload: Expr)
 }
 
 fn entry(host: &mut impl Runtime) {
-    let own_address = host.reveal_metadata().unwrap().address().unwrap();
+    let own_address = host.reveal_metadata().unwrap().address();
     read_inbox_message::<MichelsonInt>(host, &own_address);
     host.mark_for_reboot().unwrap();
 }
@@ -75,10 +73,10 @@ mod test {
     use super::*;
     use tezos_crypto_rs::hash::HashType::ContractKt1Hash;
     use tezos_data_encoding::nom::NomReader;
-    use tezos_smart_rollup_encoding::public_key_hash::PublicKeyHash;
-    use tezos_smart_rollup_mock::{MockHost, TransferMetadata};
-
-    use tezos_smart_rollup_encoding::smart_rollup::SmartRollupAddress;
+    use tezos_smart_rollup::{
+        testing::prelude::{MockHost, TransferMetadata},
+        types::{PublicKeyHash, SmartRollupAddress},
+    };
 
     const SENDER: &str = "KT1EfTusMLoeCAAGd9MZJn5yKzFr6kJU5U91";
     const SOURCE: &str = "tz1SodoUsWVe1Yey9eMFbqRUtNpBWfir5NRr";

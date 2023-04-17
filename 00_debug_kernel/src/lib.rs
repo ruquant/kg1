@@ -1,8 +1,6 @@
 extern crate alloc;
 
-use tezos_smart_rollup_debug::debug_msg;
-use tezos_smart_rollup_entrypoint::kernel_entry;
-use tezos_smart_rollup_host::runtime::Runtime;
+use tezos_smart_rollup::{kernel_entry, prelude::*};
 
 /// The main entrypoint of the kernel.
 /// This function is called by the runtime in a loop, and is

@@ -1,7 +1,9 @@
-use tezos_smart_rollup_encoding::inbox::InboxMessage;
-use tezos_smart_rollup_encoding::michelson::{Michelson, MichelsonUnit};
-use tezos_smart_rollup_entrypoint::kernel_entry;
-use tezos_smart_rollup_host::runtime::Runtime;
+use tezos_smart_rollup::{
+    inbox::InboxMessage,
+    kernel_entry,
+    michelson::{Michelson, MichelsonUnit},
+    prelude::*,
+};
 
 pub const MAGIC_BYTE: u8 = 0x1a;
 
