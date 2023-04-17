@@ -59,14 +59,45 @@ We need to add `wasm32-unknown-unknown` to be a possible target of Rust:
 rustup target add wasm32-unknown-unknown
 ```
 
+#### Additional setup for Mac
+
+The Apple `clang` compiler installed by default does not support the `wasm32` target (check with `clang --print-targets`).
+You need to install a version which does, such as the one available through Homebrew:
+
+```shell
+brew install llvm
+```
+
+You also need to add this version at the beginning of your `PATH`. For instance, on an Apple Silicon Mac, this can be done using:
+
+```shell
+export PATH="/opt/homebrew/opt/llvm/bin/:$PATH"
+```
+
+If you installed `clang` via Homebrew, you can obtain the correct path using `brew --prefix llvm`.
+
+In addition, you might also need to manually set the following environment variables, where `LLVM_PATH` is the same path as above:
+
+```shell
+export AR="${LLVM_PATH}/bin/llvm-ar"
+export CC="${LLVM_PATH}/bin/clang"
+```
+
 ## Build the WASM kernels
 
+You can build all the kernels with Cargo. In order to build the `09_tzwitter_app` kernel you also need to set this environment variable (the value itself is not important).
 
-You can build all the kernels with Cargo:
-
-```
+```shell
+export TZWITTER_L1_CONTRACT="KT1..."
 cargo build --release --target wasm32-unknown-unknown
 ```
+
+Alternatively, you can build using `cargo-make`:
+
+```shell
+cargo make wasm
+```
+
 ### Strip the generated WASM
 
 The size of generated wasm file might be large, but [WebAssembly Binary Toolkit (wabt)](https://github.com/WebAssembly/wabt) provides a tool, `wasm-strip`, to strip down the size of our wasm kernel.
