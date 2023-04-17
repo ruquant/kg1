@@ -25,8 +25,9 @@ $ octez-smart-rollup-wasm-debugger \
 > ../target/wasm32-unknown-unknown/release/storage_kernel.wasm \
 > --inputs ./inputs.json \
 > --commands ./commands.json
+68656c6c6f20776f726c64
 Loaded 0 inputs at level 0
-Evaluation took 70345 ticks so far
+Evaluation took 70489 ticks so far
 Status: Evaluating
 Internal_status: Evaluation succeeded
 ```

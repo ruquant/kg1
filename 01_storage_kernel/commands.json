@@ -1,4 +1,5 @@
 [
     "load inputs",
-    "step result"
+    "step result",
+    "show key /greeting"
 ]

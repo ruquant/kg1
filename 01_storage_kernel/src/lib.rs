@@ -9,7 +9,7 @@ use tezos_smart_rollup_host::runtime::Runtime;
 // test fixture.
 
 /// In this kernel, we'll just store a single value in persistent storage.
-fn entry(host: &mut impl Runtime) {
+pub fn entry(host: &mut impl Runtime) {
     // Kernel's can specify paths to store data in. We'll use the path "/greeting"
     let greeting_path: OwnedPath = "/greeting".as_bytes().to_vec().try_into().unwrap();
     let _ = Runtime::store_write(host, &greeting_path, "hello world".as_bytes(), 0);
@@ -20,6 +20,7 @@ kernel_entry!(entry);
 // Let's test our kernel!
 // With the Mock Host, we can execute the kernel natively (i.e without WASM)
 // to simulate interactions and assert on the results.
+#[cfg(test)]
 mod test {
     use super::*;
 
