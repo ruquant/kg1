@@ -5,7 +5,7 @@ account_alias=$1
 if [[ "$account_alias" == "" ]]; then echo "first argument should be an account alias with enough tez" && exit 1;fi
 
 # check if smart-rollup-installer is installed
-which smart-rollup-installer > /dev/null || (echo "smart-rollup-installer should be installed" && echo "cargo install tezos_smart_rollup_installer --git https://gitlab.com/tezos/tezos" && exit 1)
+which smart-rollup-installer > /dev/null || (echo "smart-rollup-installer should be installed" && echo "cargo install tezos-smart-rollup-installer --git https://gitlab.com/tezos/tezos" && exit 1)
 
 # xxd should be installed
 which xxd > /dev/null || (echo "xxd should be installed" && exit 1)
