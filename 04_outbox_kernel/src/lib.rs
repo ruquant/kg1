@@ -14,30 +14,38 @@ use tezos_smart_rollup::{
 // addressed to a predetermined L1 contract containing the same Michelson
 // payload as the inbox message.
 fn read_inbox_message<Expr: Michelson>(host: &mut impl Runtime, own_address: &SmartRollupHash) {
-    let input = host.read_input();
-    match input {
-        Err(_) | Ok(None) => (),
-        Ok(Some(message)) => {
-            // Parse the payload of the message
-            let parsed_msg = InboxMessage::<Expr>::parse(message.as_ref()).unwrap();
-            match parsed_msg {
-                (remaining, InboxMessage::Internal(msg)) => {
-                    assert!(remaining.is_empty());
-                    match msg {
-                        InternalInboxMessage::Transfer(m) => {
-                            if m.destination.hash() == own_address {
-                                debug_msg!(host, "Internal message: transfer for me\n");
-                                write_outbox_message(host, m.payload);
-                            } else {
-                                debug_msg!(host, "Internal message: transfer not for me\n")
+    loop {
+        match host.read_input() {
+            Ok(None) => break,
+            Err(_) => continue,
+            Ok(Some(message)) => {
+                // Parse the payload of the message
+                match InboxMessage::<Expr>::parse(message.as_ref()) {
+                    Ok(parsed_msg) => match parsed_msg {
+                        (remaining, InboxMessage::Internal(msg)) => {
+                            assert!(remaining.is_empty());
+                            match msg {
+                                InternalInboxMessage::Transfer(m) => {
+                                    if m.destination.hash() == own_address {
+                                        debug_msg!(host, "Internal message: transfer for me\n");
+                                        write_outbox_message(host, m.payload);
+                                    } else {
+                                        debug_msg!(host, "Internal message: transfer not for me\n")
+                                    }
+                                }
+                                _ => (),
                             }
                         }
                         _ => (),
+                    },
+                    Err(_) =>
+                    // Error parsing the message. This could happend when parsing a message
+                    // sent to a different rollup, which might have a different Michelson type.
+                    {
+                        continue
                     }
                 }
-                _ => (),
             }
-            read_inbox_message::<MichelsonInt>(host, &own_address);
         }
     }
 }
