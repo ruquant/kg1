@@ -211,7 +211,7 @@ fn update_state<R: Runtime>(rt: &mut R, state: &State) -> Result<(), RuntimeErro
     // start to write from 0
     let () = rt.store_write(&MAP_PATH, &tiles, 0)?;
 
-    // convert vector back to bytes
+    // convert vector back to bytes, and store it in the x_pos_path
     let x_pos = usize::to_be_bytes(state.player_position.x_pos);
     let () = rt.store_write(&X_POS_PATH, &x_pos, 0)?;
 
