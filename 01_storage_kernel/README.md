@@ -27,7 +27,7 @@ $ octez-smart-rollup-wasm-debugger \
 > --commands ./commands.json
 68656c6c6f20776f726c64
 Loaded 0 inputs at level 0
-Evaluation took 70489 ticks so far
+Evaluation took 235916 ticks so far
 Status: Evaluating
 Internal_status: Evaluation succeeded
 ```

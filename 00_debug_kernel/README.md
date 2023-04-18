@@ -19,7 +19,7 @@ $ octez-smart-rollup-wasm-debugger \
 > --commands ./commands.json
 Loaded 0 inputs at level 0
 Hello from kernel!
-Evaluation took 55264 ticks so far
+Evaluation took 222965 ticks so far
 Status: Evaluating
 Internal_status: Evaluation succeeded
 ```
