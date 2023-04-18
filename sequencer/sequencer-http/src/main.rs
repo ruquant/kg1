@@ -1,3 +1,4 @@
+use actix_cors::Cors;
 use actix_web::{
     http::StatusCode,
     web::{self, Json, Query},
@@ -60,15 +61,21 @@ impl Kernel for MyKernel {
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
     let sled_database_uri = "/tmp/sequencer-storage";
-    let tezos_node_uri = "https://mainnet.tezos.marigold.dev";
-    let rollup_node_uri = "https://mainnet.tezos.marigold.dev";
+    let tezos_node_uri = "http://localhost:18731";
+    let rollup_node_uri = "http://localhost:8932";
 
     let node =
         sequencer::NativeNode::new::<MyKernel>(sled_database_uri, tezos_node_uri, rollup_node_uri);
     let state = web::Data::new(node);
 
     HttpServer::new(move || {
+        let cors = Cors::default()
+            .allow_any_header()
+            .allow_any_method()
+            .allow_any_origin();
+
         App::new()
+            .wrap(cors)
             .app_data(state.clone())
             .route("/operations", web::post().to(post_message::<NativeNode>))
             .route("/state/value", web::get().to(get_state_value::<NativeNode>))
