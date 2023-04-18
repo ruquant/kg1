@@ -11,7 +11,7 @@ const MAP_PATH: RefPath = RefPath::assert_from(b"/state/map");
 const X_POS_PATH: RefPath = RefPath::assert_from(b"/state/player/x_pos");
 const Y_POS_PATH: RefPath = RefPath::assert_from(b"/state/player/y_pos");
 
-#[derive(Clone)]
+#[derive(Clone, PartialEq)]
 pub enum TileType {
     Wall,
     Floor,
@@ -23,13 +23,33 @@ pub struct Map {
 }
 
 pub fn map_idx(x: usize, y: usize) -> usize {
-    y * MAP_WIDTH + x
+    (y * MAP_WIDTH) + x
 }
 
 impl Map {
     pub fn new() -> Self {
         Self {
-            tiles: vec![TileType::Floor; MAP_HEIGHT * MAP_HEIGHT],
+            tiles: vec![TileType::Floor; MAP_WIDTH * MAP_HEIGHT],
+        }
+    }
+
+    // player cannot walk off the edge of the map
+    pub fn in_bounds(&self, x: usize, y: usize) -> bool {
+        x < MAP_WIDTH && y < MAP_HEIGHT
+    }
+
+    // player can walk on floor but not through walls
+    pub fn can_enter_tile(&self, x: usize, y: usize) -> bool {
+        self.in_bounds(x, y) && self.tiles[map_idx(x, y)] == TileType::Floor
+    }
+
+    // function to test if a map coordinate is valid.
+    // if it is then return Some(index), otherwise returns None
+    pub fn try_idx(&self, x: usize, y: usize) -> Option<usize> {
+        if !self.in_bounds(x, y) {
+            None
+        } else {
+            Some(map_idx(x, y))
         }
     }
 }
@@ -77,7 +97,7 @@ impl Player {
 // State
 pub struct State {
     map: Map,
-    player: Player,
+    player_position: Player,
 }
 
 pub enum PlayerAction {
@@ -91,21 +111,24 @@ impl State {
     pub fn new() -> Self {
         Self {
             map: Map::new(),
-            player: Player::new(MAP_WIDTH / 2, MAP_HEIGHT / 2),
+            player_position: Player::new(MAP_WIDTH / 2, MAP_HEIGHT / 2),
         }
     }
 
     pub fn transition(self, player_action: PlayerAction) -> State {
         let next_player = match player_action {
-            PlayerAction::MoveRight => self.player.move_right(),
-            PlayerAction::MoveLeft => self.player.move_left(),
-            PlayerAction::MoveUp => self.player.move_up(),
-            PlayerAction::MoveDown => self.player.move_down(),
+            PlayerAction::MoveRight => self.player_position.move_right(),
+            PlayerAction::MoveLeft => self.player_position.move_left(),
+            PlayerAction::MoveUp => self.player_position.move_up(),
+            PlayerAction::MoveDown => self.player_position.move_down(),
         };
 
-        if in_bounds(next_player.x_pos, next_player.y_pos) {
+        if self
+            .map
+            .can_enter_tile(next_player.x_pos, next_player.y_pos)
+        {
             Self {
-                player: next_player,
+                player_position: next_player,
                 ..self
             }
         } else {
@@ -124,6 +147,7 @@ fn load_state<R: Runtime>(rt: &mut R) -> Result<State, RuntimeError> {
 
     // we match them to check if they exist in the storage
     match (map_exists, x_pos_exists, y_pos_exists) {
+        // if there is none state, create a new one
         (Ok(None), Ok(None), Ok(None)) => {
             let state = State::new();
             Ok(state)
@@ -156,11 +180,14 @@ fn load_state<R: Runtime>(rt: &mut R) -> Result<State, RuntimeError> {
             let x_pos = usize::from_be_bytes(x_pos.try_into().unwrap());
             let y_pos = usize::from_be_bytes(y_pos.try_into().unwrap());
 
-            // Define a player
-            let player = Player { x_pos, y_pos };
+            // Define a player position
+            let player_position = Player { x_pos, y_pos };
 
             // Define a State
-            Ok(State { map, player })
+            Ok(State {
+                map,
+                player_position,
+            })
         }
         // other cases just create new state
         _ => Ok(State::new()),
@@ -185,10 +212,10 @@ fn update_state<R: Runtime>(rt: &mut R, state: &State) -> Result<(), RuntimeErro
     let () = rt.store_write(&MAP_PATH, &tiles, 0)?;
 
     // convert vector back to bytes
-    let x_pos = usize::to_be_bytes(state.player.x_pos);
+    let x_pos = usize::to_be_bytes(state.player_position.x_pos);
     let () = rt.store_write(&X_POS_PATH, &x_pos, 0)?;
 
-    let y_pos = usize::to_be_bytes(state.player.y_pos);
+    let y_pos = usize::to_be_bytes(state.player_position.y_pos);
     let () = rt.store_write(&Y_POS_PATH, &y_pos, 0)?;
 
     Ok(())
