@@ -1,6 +1,6 @@
 use super::{
-    database::Database, injector::Injector, kernel::Kernel, listen_tezos_header::ListenTezosHeader,
-    low_latency::LowLatency, sequencer::Sequencer, tezos_header::TezosHeader,
+    batcher::Batcher, database::Database, injector::Injector, kernel::Kernel,
+    listen_tezos_header::ListenTezosHeader, low_latency::LowLatency, tezos_header::TezosHeader,
 };
 use async_trait::async_trait;
 use tokio::sync::{
@@ -65,7 +65,7 @@ pub trait NodeBuilder<A, B, C, D, E>
 where
     A: ListenTezosHeader + Send + Sync + 'static,
     B: LowLatency<D> + Send + Sync + 'static,
-    C: Sequencer + Send + Sync + 'static,
+    C: Batcher + Send + Sync + 'static,
     D: Database,
     E: Injector + Send + Sync + 'static,
     Self: Sized,
@@ -73,7 +73,7 @@ where
     fn start<K>(
         tezos_listener: A,
         mut low_latency: B,
-        mut sequencer: C,
+        mut batcher: C,
         database: D,
         injector: E,
     ) -> NodeImpl<D>
@@ -94,11 +94,11 @@ where
 
                         match content {
                             QueueContent::Message(msg) => {
-                                let msg = sequencer.on_operation(msg);
+                                let msg = batcher.on_operation(msg);
                                 low_latency.on_message::<K>(msg);
                             }
                             QueueContent::TezosHeader(tezos_header) => {
-                                let batch = sequencer.on_tezos_header(&tezos_header);
+                                let batch = batcher.on_tezos_header(&tezos_header);
                                 low_latency.on_tezos_header(&tezos_header);
                                 let _ = injector.inject(batch).await;
                             }

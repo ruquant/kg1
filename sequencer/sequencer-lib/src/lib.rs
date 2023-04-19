@@ -17,7 +17,7 @@ impl
     NodeBuilder<
         TezosListener,
         LowLatency<SledDatabase>,
-        NativeSequencer,
+        NativeBatcher,
         SledDatabase,
         RollupBatcherInjector,
     > for NativeNode
@@ -36,7 +36,7 @@ impl NativeNode {
         let tezos_listener = TezosListener::new(tezos_node_uri.to_string());
         let low_latency = LowLatency::new(database.clone());
         let injector = RollupBatcherInjector::new(rollup_node_uri.to_string());
-        let sequencer = NativeSequencer::new();
+        let sequencer = NativeBatcher::new();
         let comm =
             NativeNode::start::<K>(tezos_listener, low_latency, sequencer, database, injector);
         NativeNode(comm)

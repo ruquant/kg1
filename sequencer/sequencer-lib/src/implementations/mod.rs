@@ -1,12 +1,12 @@
 mod low_latency;
+mod native_batcher;
 mod native_runtime;
-mod native_sequencer;
 mod rollup_batcher_injector;
 mod sled_database;
 mod tezos_listener;
 
 pub use low_latency::*;
-pub use native_sequencer::*;
+pub use native_batcher::*;
 pub use rollup_batcher_injector::*;
 pub use sled_database::*;
 pub use tezos_listener::*;

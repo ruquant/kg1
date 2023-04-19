@@ -2,12 +2,12 @@ use tezos_smart_rollup_host::input::Message;
 
 use crate::core::TezosHeader;
 
-pub struct NativeSequencer {
+pub struct NativeBatcher {
     tezos_level: u32,
     batch: Vec<Vec<u8>>,
 }
 
-impl NativeSequencer {
+impl NativeBatcher {
     pub fn new() -> Self {
         Self {
             tezos_level: 0,
@@ -16,7 +16,7 @@ impl NativeSequencer {
     }
 }
 
-impl crate::core::Sequencer for NativeSequencer {
+impl crate::core::Batcher for NativeBatcher {
     fn on_operation(&mut self, operation: Vec<u8>) -> Message {
         let message_payload = {
             let mut data = vec![0x01];
@@ -44,22 +44,22 @@ impl crate::core::Sequencer for NativeSequencer {
 
 #[cfg(test)]
 mod tests {
-    use crate::{core::Sequencer, implementations::NativeSequencer};
+    use crate::{core::Batcher, implementations::NativeBatcher};
 
     #[test]
     fn test_message_is_added() {
-        let mut sequencer = NativeSequencer::new();
+        let mut batcher = NativeBatcher::new();
         let payload = vec![0x02, 0x03, 0x04];
-        let _ = sequencer.on_operation(payload);
+        let _ = batcher.on_operation(payload);
 
-        assert_eq!(1, sequencer.batch.len())
+        assert_eq!(1, batcher.batch.len())
     }
 
     #[test]
     fn test_external_byte() {
-        let mut sequencer = NativeSequencer::new();
+        let mut batcher = NativeBatcher::new();
         let payload = vec![0x02, 0x03, 0x04];
-        let msg = sequencer.on_operation(payload.clone());
+        let msg = batcher.on_operation(payload.clone());
 
         let msg_payload = msg.as_ref();
 
