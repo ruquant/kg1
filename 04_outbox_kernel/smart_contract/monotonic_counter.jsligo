@@ -1,0 +1,21 @@
+type storage = int;
+
+const initial_storage : storage = 0
+
+type parameter =
+| ["Increment", int]
+| ["Reset", unit]
+
+const increment = ([store, n] : [storage, int]) : storage => store + n;
+
+const reset = (_store : storage) : storage => initial_storage;
+
+const main = (action: parameter, store: storage) : [ list<operation> , storage ] => {
+  return [
+    list([]),
+    (match (action, {
+      Increment: n  => increment([store, n]),
+      Reset: _ => reset(store)
+    }))
+  ]
+};
