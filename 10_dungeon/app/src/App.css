@@ -44,10 +44,30 @@
   border: 1px solid black;
 }
 
-#map {
+.player {
+  background-color: green;
+}
+
+.line {
   display: flex;
 }
 
-.player {
-  background-color: green;
+.title {
+  margin-bottom: 32px;
+}
+
+.buttons {
+  margin-top: 32px;
+  display: flex;
+  align-items: flex-end;
+}
+
+.up-down {
+  display: flex;
+  flex-direction: column;
+}
+
+button {
+  margin: 2px;
+  width: 7ch;
 }

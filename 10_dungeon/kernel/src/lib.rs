@@ -77,7 +77,7 @@ impl Player {
 
     pub fn move_down(&self) -> Player {
         Self {
-            y_pos: self.x_pos + 1,
+            y_pos: self.y_pos + 1,
             x_pos: self.x_pos,
         }
     }
@@ -86,7 +86,7 @@ impl Player {
         usize::checked_sub(self.x_pos, 1)
             .map(|x_pos| Self {
                 x_pos,
-                y_pos: self.x_pos,
+                y_pos: self.y_pos,
             })
             .unwrap_or(self.clone())
     }
