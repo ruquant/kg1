@@ -54,7 +54,7 @@ struct MyKernel {}
 
 impl Kernel for MyKernel {
     fn entry<R: Runtime>(host: &mut R) {
-        counter_kernel::entry(host)
+        kernel::entry(host)
     }
 }
 

@@ -4,13 +4,13 @@ One can follow the steps in `deploy.sh` to deploy the missing steps. This readme
 
 ## Originate the smart rollup node with the kernel
 
-``` 
+```
 ~/tezos/octez-client originate smart rollup from tz1XyoKMeg2CMTw52oQBQhBCszVfdEBsjph9 of kind wasm_2_0_0 of type bytes with kernel "${KERNEL_INSTALLER}" --burn-cap 999
 
 Warning:
-  
+
                  This is NOT the Tezos Mainnet.
-  
+
            Do NOT use your fundraiser keys on this network.
 
 Node is bootstrapped.
@@ -101,9 +101,9 @@ Output
 
 ```
 Warning:
-  
+
                  This is NOT the Tezos Mainnet.
-  
+
            Do NOT use your fundraiser keys on this network.
 
 Node is bootstrapped.
@@ -139,9 +139,9 @@ Checking the operation has been included in a block:
 ```
  ~/tezos/octez-client wait for ooK6ecJh3MBvtuzfMzhrNr45NWmVXZyiQ2ihtSvYViCMbk7snJr to be included --confirmations 1 --branch BMc9ETqkaFufUkgw1qvMVoYJav5r1SQNARjaEa91XDtcvJaM2cG
 Warning:
-  
+
                  This is NOT the Tezos Mainnet.
-  
+
            Do NOT use your fundraiser keys on this network.
 
 Operation found in block: BKvVgdMkTkeGQ7VysrtRNZFyWK93Fs52WJaZuGSuNLZqqmgPvK8 (pass: 3, offset: 0)
@@ -210,7 +210,6 @@ Internal_status: Collect
 00000010
 ```
 
-
 - The `inputs.json`: let x move up one times, y move down 1 times
 
 ```
@@ -264,3 +263,77 @@ Internal_status: Collect
 00000011
 > show key /state/player/x_pos
 ```
+
+# Sequencer
+
+To use the sequencer you have to edit the sequencer-http/Cargo.toml, and add a dependency to your kernel:
+
+```toml
+# sequencer-http/Cargo.toml
+kernel = {path = "../../10_dungeon/kernel"}
+```
+
+> Because you specify your custom kernel as a dependency of the sequencer
+> You don't have to compile your kernel on new changes
+> You just have to build or to run the sequencer
+
+Then you can compile the sequencer-http crate and resolve any issues:
+
+```rust
+// sequencer-http/src/main.rs
+impl Kernel for MyKernel {
+    fn entry<R: Runtime>(host: &mut R) {
+        kernel::entry(host)
+    }
+}
+```
+
+> You need to have a tezos node running
+> You can provide any node
+
+```rust
+let tezos_node_uri = "http://localhost:18731"; // Update this URI
+```
+
+Then you can start the sequencer:
+
+```bash
+cd sequencer/sequencer-http
+cargo run
+```
+
+To submit an operation to the sequencer, you can use curl:
+(Only external operation can added)
+
+The content type of the request is a json.
+The sequencer is exposing an post http endpoint "/operations" to submit an operation with the following payload:
+
+```json
+{ "data": "01" }
+```
+
+Where "01" refers to your hexadecimal operation.
+
+```bash
+curl -H "Content-Type: application/json" -X POST -d '{"data": "01" }' http://localhost:8080/operations
+> Operation submitted
+```
+
+And the you can retrieve your state.
+The sequencer is exposing two get endpoints to retrieve your optimist state:
+
+- one to retrieve the value "/state/value?path=..."
+- one to retrieve the list of sub keys of a path "/state/subkeys?path=..."
+
+```bash
+curl "http://127.0.0.1:8080/state/value?path=/state/player/y_pos"
+> 0000000000000007
+curl "http://127.0.0.1:8080/state/subkeys?path=/state/player"
+> ["x_pos", "y_pos"]
+```
+
+## Restart from a fresh sequencer
+
+The sequencer is saving its state into the filesystem under the folder `/tmp/sequencer-storage`
+If you want to restart a sequencer from a fresh state you just have to delete this folder
+Otherwise the sequencer will use this old state as the current one

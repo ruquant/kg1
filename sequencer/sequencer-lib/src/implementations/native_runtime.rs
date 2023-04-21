@@ -2,7 +2,7 @@ use std::collections::VecDeque;
 
 use tezos_smart_rollup_host::{
     input::Message,
-    path::{OwnedPath, Path},
+    path::{Path},
     runtime::{Runtime, RuntimeError, ValueType},
     Error,
 };
@@ -181,32 +181,32 @@ where
         }
     }
 
-    fn store_get_subkey<T: Path>(
-        &self,
-        prefix: &T,
-        index: i64,
-    ) -> Result<Option<OwnedPath>, RuntimeError> {
-        let path = std::str::from_utf8(prefix.as_bytes())
-            .map_err(|_| RuntimeError::HostErr(Error::StoreInvalidKey))?;
+    // fn store_get_subkey<T: Path>(
+    //     &self,
+    //     prefix: &T,
+    //     index: i64,
+    // ) -> Result<Option<OwnedPath>, RuntimeError> {
+    //     let path = std::str::from_utf8(prefix.as_bytes())
+    //         .map_err(|_| RuntimeError::HostErr(Error::StoreInvalidKey))?;
 
-        let node = self
-            .db
-            .read_node(path)
-            .map_err(|_| RuntimeError::HostErr(Error::GenericInvalidAccess))?;
+    //     let node = self
+    //         .db
+    //         .read_node(path)
+    //         .map_err(|_| RuntimeError::HostErr(Error::GenericInvalidAccess))?;
 
-        let index = usize::try_from(index)
-            .map_err(|_| RuntimeError::HostErr(Error::StoreInvalidSubkeyIndex))?;
+    //     let index = usize::try_from(index)
+    //         .map_err(|_| RuntimeError::HostErr(Error::StoreInvalidSubkeyIndex))?;
 
-        match node {
-            None => Err(RuntimeError::HostErr(Error::StoreNotANode)),
-            Some(node) => match node.children().get::<usize>(index) {
-                Some(path) => OwnedPath::try_from(path.to_string())
-                    .map_err(|_| RuntimeError::HostErr(Error::StoreInvalidSubkeyIndex))
-                    .map(Some),
-                None => Err(RuntimeError::HostErr(Error::StoreInvalidSubkeyIndex)),
-            },
-        }
-    }
+    //     match node {
+    //         None => Err(RuntimeError::HostErr(Error::StoreNotANode)),
+    //         Some(node) => match node.children().get::<usize>(index) {
+    //             Some(path) => OwnedPath::try_from(path.to_string())
+    //                 .map_err(|_| RuntimeError::HostErr(Error::StoreInvalidSubkeyIndex))
+    //                 .map(Some),
+    //             None => Err(RuntimeError::HostErr(Error::StoreInvalidSubkeyIndex)),
+    //         },
+    //     }
+    // }
 
     fn store_move(
         &mut self,

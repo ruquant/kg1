@@ -55,6 +55,7 @@ impl Map {
 }
 
 // Player
+#[derive(Clone)]
 pub struct Player {
     pub x_pos: usize,
     pub y_pos: usize,
@@ -66,10 +67,12 @@ impl Player {
     }
 
     pub fn move_up(&self) -> Player {
-        Self {
-            y_pos: self.y_pos - 1,
-            x_pos: self.x_pos,
-        }
+        usize::checked_sub(self.y_pos, 1)
+            .map(|y_pos| Self {
+                y_pos,
+                x_pos: self.x_pos,
+            })
+            .unwrap_or(self.clone())
     }
 
     pub fn move_down(&self) -> Player {
@@ -80,10 +83,12 @@ impl Player {
     }
 
     pub fn move_left(&self) -> Player {
-        Self {
-            x_pos: self.x_pos - 1,
-            y_pos: self.y_pos,
-        }
+        usize::checked_sub(self.x_pos, 1)
+            .map(|x_pos| Self {
+                x_pos,
+                y_pos: self.x_pos,
+            })
+            .unwrap_or(self.clone())
     }
 
     pub fn move_right(&self) -> Player {
@@ -247,11 +252,14 @@ pub fn entry<R: Runtime>(rt: &mut R) {
                 };
                 match player_action {
                     Some(player_action) => {
+                        rt.write_debug("Message is deserialized");
                         let state: Result<State, RuntimeError> = load_state(rt);
                         // match the state
                         match state {
-                            Err(_) => {}
+                            Err(err) => rt.write_debug(&format!("error: {:?}", err)),
                             Ok(state) => {
+                                rt.write_debug("Calling transtion");
+
                                 let next_state = state.transition(player_action);
                                 let res = update_state(rt, &next_state);
                                 match res {
@@ -263,7 +271,9 @@ pub fn entry<R: Runtime>(rt: &mut R) {
                             }
                         }
                     }
-                    None => {}
+                    None => {
+                        rt.write_debug("Message is NOT deserialized");
+                    }
                 }
             }
             _ => break,
