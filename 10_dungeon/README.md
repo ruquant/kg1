@@ -337,3 +337,20 @@ curl "http://127.0.0.1:8080/state/subkeys?path=/state/player"
 The sequencer is saving its state into the filesystem under the folder `/tmp/sequencer-storage`
 If you want to restart a sequencer from a fresh state you just have to delete this folder
 Otherwise the sequencer will use this old state as the current one
+
+# Starting the application
+
+To start the application you have to run the sequencer (see above) and then run the front-end application as follow:
+
+```bash
+cd app
+yarn install
+```
+
+And then you can start it with yarn
+
+```
+yarn start
+```
+
+An new tab browser should open on "http://localhost:3000/"
