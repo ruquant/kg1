@@ -6,5 +6,5 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-tezos_smart_rollup_core = { git = "https://gitlab.com/tezos/tezos" } 
-tezos_smart_rollup_host = { git = "https://gitlab.com/tezos/tezos" } 
+tezos-smart-rollup-core = { git = "https://gitlab.com/tezos/tezos" } 
+tezos-smart-rollup-host = { git = "https://gitlab.com/tezos/tezos" } 
