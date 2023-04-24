@@ -61,7 +61,7 @@ impl Kernel for MyKernel {
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
     let sled_database_uri = "/tmp/sequencer-storage";
-    let tezos_node_uri = "http://localhost:18731";
+    let tezos_node_uri = "http://localhost:8732";
     let rollup_node_uri = "http://localhost:8932";
 
     let node =

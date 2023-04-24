@@ -10,6 +10,8 @@ const MAP_HEIGHT: usize = 32;
 const MAP_PATH: RefPath = RefPath::assert_from(b"/state/map");
 const X_POS_PATH: RefPath = RefPath::assert_from(b"/state/player/x_pos");
 const Y_POS_PATH: RefPath = RefPath::assert_from(b"/state/player/y_pos");
+const X_POS_ITEM_PATH: RefPath = RefPath::assert_from(b"/state/item/x_pos_item");
+const Y_POS_ITEM_PATH: RefPath = RefPath::assert_from(b"/state/item/y_pos_item");
 
 #[derive(Clone, PartialEq)]
 pub enum TileType {
@@ -42,14 +44,21 @@ impl Map {
     pub fn can_enter_tile(&self, x: usize, y: usize) -> bool {
         self.in_bounds(x, y) && self.tiles[map_idx(x, y)] == TileType::Floor
     }
+}
 
-    // function to test if a map coordinate is valid.
-    // if it is then return Some(index), otherwise returns None
-    pub fn try_idx(&self, x: usize, y: usize) -> Option<usize> {
-        if !self.in_bounds(x, y) {
-            None
-        } else {
-            Some(map_idx(x, y))
+// Item
+
+#[derive(Clone)]
+pub struct Item {
+    pub x_pos_item: usize,
+    pub y_pos_item: usize,
+}
+
+impl Item {
+    pub fn new(x_pos_item: usize, y_pos_item: usize) -> Self {
+        Self {
+            x_pos_item,
+            y_pos_item,
         }
     }
 }
@@ -59,6 +68,7 @@ impl Map {
 pub struct Player {
     pub x_pos: usize,
     pub y_pos: usize,
+    // Todo: add inventory for items
 }
 
 impl Player {
@@ -97,12 +107,22 @@ impl Player {
             y_pos: self.y_pos,
         }
     }
+
+    // TODO pick up item
+    // pickup: When the player index is = item index
+    // action: click on pickup
+    // delete the item index
+    // store the item into inventory for the player
+    pub fn pick_up(item: Item) -> Player {
+        todo!()
+    }
 }
 
 // State
 pub struct State {
     map: Map,
     player_position: Player,
+    item_position: Item,
 }
 
 pub enum PlayerAction {
@@ -110,6 +130,7 @@ pub enum PlayerAction {
     MoveLeft,
     MoveUp,
     MoveDown,
+    PickUp,
 }
 
 impl State {
@@ -117,15 +138,17 @@ impl State {
         Self {
             map: Map::new(),
             player_position: Player::new(MAP_WIDTH / 2, MAP_HEIGHT / 2),
+            item_position: Item::new(MAP_WIDTH / 3, MAP_HEIGHT / 3),
         }
     }
 
-    pub fn transition(self, player_action: PlayerAction) -> State {
+    pub fn transition(self, player_action: PlayerAction, item: Item) -> State {
         let next_player = match player_action {
             PlayerAction::MoveRight => self.player_position.move_right(),
             PlayerAction::MoveLeft => self.player_position.move_left(),
             PlayerAction::MoveUp => self.player_position.move_up(),
             PlayerAction::MoveDown => self.player_position.move_down(),
+            PlayerAction::PickUp => Player::pick_up(item),
         };
 
         if self
@@ -150,15 +173,28 @@ fn load_state<R: Runtime>(rt: &mut R) -> Result<State, RuntimeError> {
     let x_pos_exists = rt.store_has(&X_POS_PATH);
     let y_pos_exists = rt.store_has(&Y_POS_PATH);
 
+    let x_pos_item_exists = rt.store_has(&X_POS_ITEM_PATH);
+    let y_pos_item_exists = rt.store_has(&Y_POS_ITEM_PATH);
+
     // we match them to check if they exist in the storage
-    match (map_exists, x_pos_exists, y_pos_exists) {
+    match (
+        map_exists,
+        x_pos_exists,
+        y_pos_exists,
+        x_pos_item_exists,
+        y_pos_item_exists,
+    ) {
         // if there is none state, create a new one
-        (Ok(None), Ok(None), Ok(None)) => {
+        (Ok(None), Ok(None), Ok(None), Ok(None), Ok(None)) => {
             let state = State::new();
             Ok(state)
         }
-        (Err(err), _, _) | (_, Err(err), _) | (_, _, Err(err)) => Err(err),
-        (Ok(Some(_)), Ok(Some(_)), Ok(Some(_))) => {
+        (Err(err), _, _, _, _)
+        | (_, Err(err), _, _, _)
+        | (_, _, Err(err), _, _)
+        | (_, _, _, Err(err), _)
+        | (_, _, _, _, Err(err)) => Err(err),
+        (Ok(Some(_)), Ok(Some(_)), Ok(Some(_)), Ok(Some(_)), Ok(Some(_))) => {
             // we have the path, now we read the data from it
             // store_read: know the size of the data, the offset is 0: starting of the bytes (from 0 to max_bytes)
             // store_read_slice: do not know the size of the data, will return the buffer
@@ -166,6 +202,10 @@ fn load_state<R: Runtime>(rt: &mut R) -> Result<State, RuntimeError> {
             // the size max is only know at the run
             let x_pos = rt.store_read(&X_POS_PATH, 0, std::mem::size_of::<usize>())?;
             let y_pos = rt.store_read(&Y_POS_PATH, 0, std::mem::size_of::<usize>())?;
+
+            // items
+            let x_pos_item = rt.store_read(&X_POS_ITEM_PATH, 0, std::mem::size_of::<usize>())?;
+            let y_pos_item = rt.store_read(&Y_POS_ITEM_PATH, 0, std::mem::size_of::<usize>())?;
 
             // convert
             // map each bytes to idendify which bytes is a Floor or a Wall
@@ -188,10 +228,21 @@ fn load_state<R: Runtime>(rt: &mut R) -> Result<State, RuntimeError> {
             // Define a player position
             let player_position = Player { x_pos, y_pos };
 
+            // Define an item position
+            let x_pos_item = usize::from_be_bytes(x_pos_item.try_into().unwrap());
+            let y_pos_item = usize::from_be_bytes(y_pos_item.try_into().unwrap());
+
+            // Define a player position
+            let item_position = Item {
+                x_pos_item,
+                y_pos_item,
+            };
+
             // Define a State
             Ok(State {
                 map,
                 player_position,
+                item_position,
             })
         }
         // other cases just create new state
@@ -223,6 +274,13 @@ fn update_state<R: Runtime>(rt: &mut R, state: &State) -> Result<(), RuntimeErro
     let y_pos = usize::to_be_bytes(state.player_position.y_pos);
     let () = rt.store_write(&Y_POS_PATH, &y_pos, 0)?;
 
+    // item
+    let x_pos_item = usize::to_be_bytes(state.item_position.x_pos_item);
+    let () = rt.store_write(&X_POS_ITEM_PATH, &x_pos_item, 0)?;
+
+    let y_pos_item = usize::to_be_bytes(state.item_position.y_pos_item);
+    let () = rt.store_write(&Y_POS_ITEM_PATH, &y_pos_item, 0)?;
+
     Ok(())
 }
 
@@ -248,8 +306,19 @@ pub fn entry<R: Runtime>(rt: &mut R) {
                     [0x01, 0x03] => Some(PlayerAction::MoveLeft),
                     // move right
                     [0x01, 0x04] => Some(PlayerAction::MoveRight),
+                    // pickup
+                    [0x01, 0x05] => Some(PlayerAction::PickUp),
                     _ => None,
                 };
+
+                // TODO: item
+                // Define an item position
+                let item = Item {
+                    x_pos_item: MAP_WIDTH / 3,
+                    y_pos_item: MAP_HEIGHT / 3,
+                };
+
+                // player and item
                 match player_action {
                     Some(player_action) => {
                         rt.write_debug("Message is deserialized");
@@ -260,7 +329,7 @@ pub fn entry<R: Runtime>(rt: &mut R) {
                             Ok(state) => {
                                 rt.write_debug("Calling transtion");
 
-                                let next_state = state.transition(player_action);
+                                let next_state = state.transition(player_action, item);
                                 let res = update_state(rt, &next_state);
                                 match res {
                                     Ok(_) => {}
