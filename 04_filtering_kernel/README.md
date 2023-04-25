@@ -1,4 +1,4 @@
-# Example 1: Message Filtering Kernel
+# Example: Message Filtering Kernel
 
 ## Running the example
 

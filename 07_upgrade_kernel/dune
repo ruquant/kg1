@@ -1,0 +1,2 @@
+;; Enable MDX tests on README.md
+(mdx)

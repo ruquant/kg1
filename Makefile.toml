@@ -36,11 +36,17 @@ workspace = false
 command = "cargo"
 args = ["doc", "--features", "testing", "--no-deps", "--target-dir", "public"]
 
+[tasks.upgrade-client]
+workspace = false
+command = "cargo"
+args = ["build", "--release", "--bin", "upgrade-client"]
+
 [tasks.ci]
 workspace = false
 dependencies = [
     "fmt-check",
     "wasm",
+    "upgrade-client",
     "docs-test",
     "test"
 ]

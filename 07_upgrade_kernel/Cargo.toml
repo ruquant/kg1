@@ -1,0 +1,16 @@
+[package]
+name = "upgrade-kernel"
+version = "0.1.0"
+edition = "2021"
+
+[lib]
+crate-type = ["cdylib", "lib"]
+
+[dependencies]
+tezos-smart-rollup = { git = "https://gitlab.com/marigold/tezos",  rev = "046281d4494560ed96796bd7ffe9053e573654f3" }
+tezos_data_encoding = { version = "0.4" }
+tezos_data_encoding_derive = { version = "0.4" }
+nom = "6.1"
+tezos_crypto_rs = { version = "0.4", default-features = false }
+hex = "0.4.3"
+hex-literal = "0.4.1"

@@ -8,7 +8,9 @@ members = [
     "04_filtering_kernel",
     "05_outbox_kernel",
     "06_counter_kernel",
-    "09_tzwitter_app/kernel"
+    "07_upgrade_kernel",
+    "07_upgrade_kernel/upgrade-client" ,
+    "09_tzwitter_app/kernel" 
 ]
 
 # FIXME: what is this? Do we need it?

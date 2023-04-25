@@ -1,4 +1,4 @@
-# Example 1: Storage Kernel
+# Example: Storage Kernel
 
 In this example, we take a first look writing and reading to persistent storage.
 

@@ -1,4 +1,4 @@
-# Example 2: Inbox Kernel
+# Example: Inbox Kernel
 
 ## Running the example
 
