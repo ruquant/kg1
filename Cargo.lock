@@ -599,6 +599,13 @@ dependencies = [
 ]
 
 [[package]]
+name = "reboot-kernel"
+version = "0.1.0"
+dependencies = [
+ "tezos-smart-rollup",
+]
+
+[[package]]
 name = "regex"
 version = "1.4.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
