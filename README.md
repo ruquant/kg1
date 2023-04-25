@@ -1,18 +1,22 @@
-# SORU Kernel Gallery
+# Smart Rollup Kernel Gallery
 
 [[_TOC_]]
 
 
 The kernel gallery is a direcory of examples to help you get started writing
-your own WASM kernels for [Tezos SORU](http://tezos.gitlab.io/alpha/smart_rollups.html).
+your own WASM kernels for [Tezos Smart Rollups](http://tezos.gitlab.io/alpha/smart_rollups.html).
 
 This repository is intended as companion to the docs on [developing your wasm kernel](http://tezos.gitlab.io/alpha/smart_rollups.html#developing-wasm-kernels). Additionally, it showcases
 simple end-to-end rollup applications, demonstrating how you can use rollups in your DApps.
 
 We recommend going through examples in order:
 - **00_debug_kernel**: shows how to debug messages and read from the shared inbox.
-- **01_counter_kernel**: shows a simple rollup that tracks how many times users have called in in its persistent storage. Additionally introductes the `mock_host` testing fixtures.
-- **02_tzwitter**: a twitter clone demonstrating a full rollup DApp.
+- **01_storage_kernel**: shows how to read and write to the kernel's persistent storage.
+- **02_inbox_kernel**: shows how to read from the shared inbox.
+- **03_filtering_kernel**: shows how to filter messages coming from the shared inbox.
+- **04_outbox_kernel**: shows how to write messages to the outbox to communicate back to the L1.
+- **0n_counter_kernel**: a larger example combining the above elements into a simple counter application.
+- **09_tzwitter_app**: A full fledged rollup DApp for social media, combining an L1 smart contract, rollup kernel, React+Typescript frontend, and deployment script.
 
 Each kernel directory includes a README.md that demonstrates how to test the kernel
 with the `octez-smart-rollup-wasm-debugger` against a set of inputs and commands. The
@@ -27,6 +31,8 @@ To run the `octez-smart-rollup-wasm-debugger`, you will need to install it [from
 Alternatively, Nix users can activate a shell with the required dependencies with `nix develop`.
 
 ### Setup Rust
+
+(Mac users, don't miss the section for you further down!)
 
 The suggested [Rust](https://www.rust-lang.org/) version is `1.66.0`.
 
@@ -109,50 +115,21 @@ wasm-strip target/wasm32-unknown-unknown/release/<name>_kernel.wasm
 ```
 
 
-<!-- TODO: I haven't finished editing past this point:-->
 ## Tests
 
-We provide pre-defined tasks for building kernels, that requires [`cargo-make`](https://github.com/sagiegurari/cargo-make):
+Each kernel comes with tests and tests of the README, defined as [`cargo-make`](https://github.com/sagiegurari/cargo-make) tasks.
+You can install `cargo-make` like so:
 
 ```shell
 cargo install cargo-make
 ```
 
-After install `cargo-make` we can now build our kernel! Remember to replace `<name>` by one of `debug`, `output`, `hello` or `counter`.
+## Octez Smart Rollup WASM Debugger
 
-```shell
-cargo make wasm-<name>-kernel
-```
+The Octez software system includes an interactive debugger for Smart Rollup kernels, documented [here](https://tezos.gitlab.io/alpha/smart_rollups.html#testing-your-kernel). 
+Each kernel's README includes examples how to use it.
 
-This will export the wasm file at the directory `target/wasm32-unknown-unknown/release/<name>_kernel.wasm`.
+## Deployment
 
-
-
-## Unit Test
-
-We use [`wasm-bindgen-test`](https://rustwasm.github.io/wasm-bindgen/wasm-bindgen-test/usage.html) to unit test our kernels. To use `wasm-bindgen-test` with Cargo however, you need to install `wasm-bindgen-cli` that will provide you the required test runner.
-
-```shell
-cargo install wasm-bindgen-cli
-```
-
-then we can test all kernel together by running
-
-```shell
-cargo test
-```
-
-## Debug tool for kernel
-
-As REPL (read-eval-print-loop) is an interactive environment, the `octez-wasm-repl` is the tool to evaluate the WASM PVM without running any Tezos node in the background. It has been designed for interact and test the kernel in a local environment.
-
-In the Pistachio-gitbook you can find the tutorial at [How to debug wasm kernels](doc/how-to-debug-kernels.md)
-
-## Interact kernel with SORU
-
-Currently, the MondayNet test is one of the periodic Tezos testnets. More information can be found in <https://teztnets.xyz/mondaynet-about>
-
-You can find more details at:
-
-- [How to interact with Mondaynet](doc/how-to-mondaynet.md)
-- [How to interact with SORU](doc/how-to-soru.md)
+Refer to [the docs](https://tezos.gitlab.io/alpha/smart_rollups.html#deploying-a-rollup-node). Additionally, 
+you can look at an example deployment script in `./09_tzwitter_app/deploy.sh`.
