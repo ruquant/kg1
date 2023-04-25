@@ -12,10 +12,11 @@ simple end-to-end rollup applications, demonstrating how you can use rollups in 
 We recommend going through examples in order:
 - **00_debug_kernel**: shows how to debug messages and read from the shared inbox.
 - **01_storage_kernel**: shows how to read and write to the kernel's persistent storage.
-- **02_inbox_kernel**: shows how to read from the shared inbox.
-- **03_filtering_kernel**: shows how to filter messages coming from the shared inbox.
-- **04_outbox_kernel**: shows how to write messages to the outbox to communicate back to the L1.
-- **0n_counter_kernel**: a larger example combining the above elements into a simple counter application.
+- **02_reboot_kernel**: shows how to mark a kernel reboot and discusses kernel control flow.
+- **03_inbox_kernel**: shows how to read from the shared inbox.
+- **04_filtering_kernel**: shows how to filter messages coming from the shared inbox.
+- **05_outbox_kernel**: shows how to write messages to the outbox to communicate back to the L1.
+- **06_counter_kernel**: a larger example combining the above elements into a simple counter application.
 - **09_tzwitter_app**: A full fledged rollup DApp for social media, combining an L1 smart contract, rollup kernel, React+Typescript frontend, and deployment script.
 
 Each kernel directory includes a README.md that demonstrates how to test the kernel

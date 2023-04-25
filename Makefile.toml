@@ -7,10 +7,6 @@ TZWITTER_L1_CONTRACT= "KT1000"
 command = "cargo"
 args = ["clean"]
 
-[tasks.fmt]
-command = "cargo"
-args = ["fmt"]
-
 [tasks.fmt-check]
 command = "cargo"
 args = ["fmt", "--", "--check"]
@@ -43,11 +39,8 @@ args = ["doc", "--features", "testing", "--no-deps", "--target-dir", "public"]
 [tasks.ci]
 workspace = false
 dependencies = [
-    "fmt", # FIXME: do we need both fmt and fmt-check here?
     "fmt-check",
     "wasm",
     "docs-test",
     "test"
-    # FIXME: re-enable these when they compile
-    # "doc",
 ]
