@@ -10,8 +10,11 @@ const MAP_HEIGHT: usize = 32;
 const MAP_PATH: RefPath = RefPath::assert_from(b"/state/map");
 const X_POS_PATH: RefPath = RefPath::assert_from(b"/state/player/x_pos");
 const Y_POS_PATH: RefPath = RefPath::assert_from(b"/state/player/y_pos");
+const INVENTORY_PATH: RefPath = RefPath::assert_from(b"/state/player/inventory");
 const X_POS_ITEM_PATH: RefPath = RefPath::assert_from(b"/state/item/x_pos_item");
 const Y_POS_ITEM_PATH: RefPath = RefPath::assert_from(b"/state/item/y_pos_item");
+
+const MAX_ITEMS: usize = 2;
 
 #[derive(Clone, PartialEq)]
 pub enum TileType {
@@ -48,7 +51,7 @@ impl Map {
 
 // Item
 
-#[derive(Clone)]
+#[derive(Clone, PartialEq)]
 pub struct Item {
     pub x_pos_item: usize,
     pub y_pos_item: usize,
@@ -68,12 +71,16 @@ impl Item {
 pub struct Player {
     pub x_pos: usize,
     pub y_pos: usize,
-    // Todo: add inventory for items
+    pub inventory: Vec<Item>,
 }
 
 impl Player {
     pub fn new(x_pos: usize, y_pos: usize) -> Self {
-        Self { x_pos, y_pos }
+        Self {
+            x_pos,
+            y_pos,
+            inventory: Vec::new(),
+        }
     }
 
     pub fn move_up(&self) -> Player {
@@ -81,6 +88,7 @@ impl Player {
             .map(|y_pos| Self {
                 y_pos,
                 x_pos: self.x_pos,
+                inventory: self.inventory.clone(),
             })
             .unwrap_or(self.clone())
     }
@@ -89,6 +97,7 @@ impl Player {
         Self {
             y_pos: self.y_pos + 1,
             x_pos: self.x_pos,
+            inventory: self.inventory.clone(),
         }
     }
 
@@ -97,6 +106,7 @@ impl Player {
             .map(|x_pos| Self {
                 x_pos,
                 y_pos: self.y_pos,
+                inventory: self.inventory.clone(),
             })
             .unwrap_or(self.clone())
     }
@@ -105,6 +115,7 @@ impl Player {
         Self {
             x_pos: self.x_pos + 1,
             y_pos: self.y_pos,
+            inventory: self.inventory.clone(),
         }
     }
 
@@ -170,9 +181,15 @@ fn load_state<R: Runtime>(rt: &mut R) -> Result<State, RuntimeError> {
     // Check whether or not there is existing the state inside the path
     // if not then return the default state
     let map_exists = rt.store_has(&MAP_PATH);
+
+    // player position
     let x_pos_exists = rt.store_has(&X_POS_PATH);
     let y_pos_exists = rt.store_has(&Y_POS_PATH);
 
+    // inventory
+    let inventory_exists = rt.store_has(&INVENTORY_PATH);
+
+    // item position
     let x_pos_item_exists = rt.store_has(&X_POS_ITEM_PATH);
     let y_pos_item_exists = rt.store_has(&Y_POS_ITEM_PATH);
 
@@ -181,31 +198,41 @@ fn load_state<R: Runtime>(rt: &mut R) -> Result<State, RuntimeError> {
         map_exists,
         x_pos_exists,
         y_pos_exists,
+        inventory_exists,
         x_pos_item_exists,
         y_pos_item_exists,
     ) {
         // if there is none state, create a new one
-        (Ok(None), Ok(None), Ok(None), Ok(None), Ok(None)) => {
+        (Ok(None), Ok(None), Ok(None), Ok(None), Ok(None), Ok(None)) => {
             let state = State::new();
             Ok(state)
         }
-        (Err(err), _, _, _, _)
-        | (_, Err(err), _, _, _)
-        | (_, _, Err(err), _, _)
-        | (_, _, _, Err(err), _)
-        | (_, _, _, _, Err(err)) => Err(err),
-        (Ok(Some(_)), Ok(Some(_)), Ok(Some(_)), Ok(Some(_)), Ok(Some(_))) => {
+        (Err(err), _, _, _, _, _)
+        | (_, Err(err), _, _, _, _)
+        | (_, _, Err(err), _, _, _)
+        | (_, _, _, Err(err), _, _)
+        | (_, _, _, _, Err(err), _)
+        | (_, _, _, _, _, Err(err)) => Err(err),
+        (Ok(Some(_)), Ok(Some(_)), Ok(Some(_)), Ok(Some(_)), Ok(Some(_)), Ok(Some(_))) => {
             // we have the path, now we read the data from it
             // store_read: know the size of the data, the offset is 0: starting of the bytes (from 0 to max_bytes)
             // store_read_slice: do not know the size of the data, will return the buffer
-            let map_bytes = rt.store_read(&MAP_PATH, 0, MAP_WIDTH * MAP_HEIGHT)?;
             // the size max is only know at the run
+
+            let map_bytes = rt.store_read(&MAP_PATH, 0, MAP_WIDTH * MAP_HEIGHT)?;
+
+            // player position
             let x_pos = rt.store_read(&X_POS_PATH, 0, std::mem::size_of::<usize>())?;
             let y_pos = rt.store_read(&Y_POS_PATH, 0, std::mem::size_of::<usize>())?;
 
-            // items
-            let x_pos_item = rt.store_read(&X_POS_ITEM_PATH, 0, std::mem::size_of::<usize>())?;
-            let y_pos_item = rt.store_read(&Y_POS_ITEM_PATH, 0, std::mem::size_of::<usize>())?;
+            // inventory
+            let inventory_bytes = rt.store_read(&INVENTORY_PATH, 0, MAX_ITEMS)?;
+
+            // item position
+            let x_pos_item_bytes =
+                rt.store_read(&X_POS_ITEM_PATH, 0, std::mem::size_of::<usize>())?;
+            let y_pos_item_bytes =
+                rt.store_read(&Y_POS_ITEM_PATH, 0, std::mem::size_of::<usize>())?;
 
             // convert
             // map each bytes to idendify which bytes is a Floor or a Wall
@@ -225,17 +252,33 @@ fn load_state<R: Runtime>(rt: &mut R) -> Result<State, RuntimeError> {
             let x_pos = usize::from_be_bytes(x_pos.try_into().unwrap());
             let y_pos = usize::from_be_bytes(y_pos.try_into().unwrap());
 
-            // Define a player position
-            let player_position = Player { x_pos, y_pos };
-
-            // Define an item position
-            let x_pos_item = usize::from_be_bytes(x_pos_item.try_into().unwrap());
-            let y_pos_item = usize::from_be_bytes(y_pos_item.try_into().unwrap());
+            // convert item position
+            let x_pos_item = usize::from_be_bytes(x_pos_item_bytes.try_into().unwrap());
+            let y_pos_item = usize::from_be_bytes(y_pos_item_bytes.try_into().unwrap());
 
             // Define a player position
             let item_position = Item {
                 x_pos_item,
                 y_pos_item,
+            };
+
+            // convert vector of inventory to bytes
+            let inventory: Vec<Item> = inventory_bytes
+                .iter()
+                .filter_map(|bytes| match bytes {
+                    0x06 => Some(Item {
+                        x_pos_item,
+                        y_pos_item,
+                    }),
+                    _ => None,
+                })
+                .collect();
+
+            // Define a player position
+            let player_position = Player {
+                x_pos,
+                y_pos,
+                inventory: inventory,
             };
 
             // Define a State
@@ -273,6 +316,21 @@ fn update_state<R: Runtime>(rt: &mut R, state: &State) -> Result<(), RuntimeErro
 
     let y_pos = usize::to_be_bytes(state.player_position.y_pos);
     let () = rt.store_write(&Y_POS_PATH, &y_pos, 0)?;
+
+    // inventory
+    let inventory: Vec<u8> = state
+        .player_position
+        .inventory
+        .iter()
+        .map(|inventory| match inventory {
+            Item {
+                x_pos_item: _,
+                y_pos_item: _,
+            } => 0x06,
+        })
+        .collect();
+
+    let () = rt.store_write(&INVENTORY_PATH, &inventory, 0)?;
 
     // item
     let x_pos_item = usize::to_be_bytes(state.item_position.x_pos_item);
