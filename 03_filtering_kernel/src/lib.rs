@@ -16,6 +16,9 @@ use tezos_smart_rollup::{
 // Here, we will use a `MAGIC_BYTE`, which we will require as a prefix of any
 // external message addressed to this rollup.
 pub const MAGIC_BYTE: u8 = 0x1a;
+// Another good strategy is to include the rollup address itself in the message,
+// read the rollup address in the kernel via `host.read_metadata()`, and filter
+// for just those messages that include the correct address.
 
 fn read_inbox_message<Expr: Michelson>(host: &mut impl Runtime) {
     loop {

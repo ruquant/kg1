@@ -9,24 +9,24 @@ use tezos_smart_rollup::{
 // The rollups inbox is the mechanism by which the Layer 1 can send messages to
 // rollups. These can be:
 // - Internal messages: sent by the Layer 1 itself, either:
-//   - as a result of a smart contract transferring assets to a rollup address, or
-//   - status messages from the protocol
-// - External messages: sent by anyone via a Layer 1 operation, can include any
-// kind of data, as defined by the kernel
+//   - as a result of a smart contract making a transfer to a rollup address, or
+//   - status messages from the protocol (such as the start or end of a new block level)
+// - External messages: sent by anyone via a new kind of Layer 1 operation. These can
+// include any kind of data, as defined by the kernel.
 
 // The `read_inbox_message` function shows how to parse all of these messages,
 // but more detailed handling of internal transfer messages and external
 // messages is shown in the `filtering-kernel` and `outbox-kernel` examples.
 // It is also important to keep in mind that the rollups inbox is shared among
 // all deployed rollups, meaning that we should check whether a message is
-// addressed to us before processing it. For simplicity, this kernel skips over
+// intended for us before processing it. For simplicity, this kernel skips over
 // these checks, but they are also demonstrated in the aforementioned examples.
 
 fn read_inbox_message<Expr: Michelson>(host: &mut impl Runtime) {
     // In this example, we are using an infinite loop, breaking only when
     // we reach the end of the inbox. In practice, we would need to be
     // mindful of how many ticks the processing of each kind of message takes.
-    // We need to benchmark the execution of our kernel and set a conservative
+    // We must be careful to benchmark the execution of our kernel and set a conservative
     // limit on how many messages the kernel can process before marking it for
     // reboot. See [https://tezos.gitlab.io/alpha/smart_rollups.html#developing-wasm-kernels]
     // for more details.
@@ -97,7 +97,9 @@ fn read_inbox_message<Expr: Michelson>(host: &mut impl Runtime) {
                 break
             }
             Err(_) =>
-            // An error here would most likely indicate a malformed message, ignore.
+            // An error here would most likely indicate a violation of the protocol between
+            // the Layer 1 and the rollup node or kernel, e.g. as a result of a protocol
+            // upgrade that was not handled by the kernel appropriately.
             {
                 continue
             }

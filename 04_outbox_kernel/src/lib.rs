@@ -55,9 +55,9 @@ fn read_inbox_message<Expr: Michelson>(host: &mut impl Runtime, own_address: &Sm
 // messages will refer to.
 const L1_CONTRACT_ADDRESS: &str = "KT1RycYvM4EVs6BAXWEsGXaAaRqiMP53KT4w";
 
-// See `smart_contract/monotonic_counter.jsligo` for a simple smart contract
+// See `smart_contract/counter.jsligo` for a simple smart contract
 // example implementing an entrypoint of the same type as this kernel (int).
-const L1_CONTRACT_ENTRYPOINT: &str = "increment";
+const L1_CONTRACT_ENTRYPOINT: &str = "default";
 
 fn write_outbox_message<Expr: Michelson>(host: &mut impl Runtime, payload: Expr) {
     let destination = Contract::from_b58check(L1_CONTRACT_ADDRESS).unwrap();
