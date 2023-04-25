@@ -1,4 +1,4 @@
-# Example 0: Debug Kernel
+# Example: Debug Kernel
 
 In our second kernel, we will demonstrate how to write and read data in durable state of the rollup.
 

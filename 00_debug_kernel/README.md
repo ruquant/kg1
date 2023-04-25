@@ -1,4 +1,4 @@
-# Example 0: Debug Kernel
+# Example: Debug Kernel
 
 In our first kernel, we will demonstrate how to write debug messages
 and read from the shared inbox.

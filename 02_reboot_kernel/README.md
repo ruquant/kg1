@@ -1,4 +1,4 @@
-# Example 2: Reboot Kernel
+# Example: Reboot Kernel
 
 In this kernel, we begin to examine the control flow of
 the kernel and learn how to mark the kernel for reboot at runtime.
