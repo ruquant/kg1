@@ -23,6 +23,7 @@ pub enum TileType {
 }
 
 // Map
+#[derive(Clone, PartialEq)]
 pub struct Map {
     pub tiles: Vec<TileType>,
 }
@@ -64,10 +65,18 @@ impl Item {
             y_pos_item,
         }
     }
+
+    pub fn get_x(self) -> usize {
+        self.x_pos_item
+    }
+
+    pub fn get_y(self) -> usize {
+        self.y_pos_item
+    }
 }
 
 // Player
-#[derive(Clone)]
+#[derive(Clone, PartialEq)]
 pub struct Player {
     pub x_pos: usize,
     pub y_pos: usize,
@@ -119,21 +128,40 @@ impl Player {
         }
     }
 
-    // TODO pick up item
-    // pickup: When the player index is = item index
-    // action: click on pickup
-    // delete the item index
-    // store the item into inventory for the player
-    pub fn pick_up(item: Item) -> Player {
-        todo!()
+    // add item to inventory
+    pub fn add_item<R: Runtime>(&self, rt: &mut R, item: Item) -> Result<(), RuntimeError> {
+        let inventory_len = self.inventory.len();
+
+        if inventory_len <= MAX_ITEMS {
+            let x_pos_item = item.x_pos_item;
+            let y_pos_item = item.y_pos_item;
+
+            // add item to inventory
+            let inventory: Vec<u8> = self
+                .inventory
+                .iter()
+                .map(|inventory| match inventory {
+                    Item {
+                        x_pos_item,
+                        y_pos_item,
+                    } => 0x06,
+                })
+                .collect();
+            let () = rt.store_write(&INVENTORY_PATH, &inventory, 0)?;
+
+            Ok(())
+        } else {
+            todo!()
+        }
     }
 }
 
 // State
+#[derive(Clone, PartialEq)]
 pub struct State {
     map: Map,
     player_position: Player,
-    item_position: Item,
+    item_position: Option<Item>,
 }
 
 pub enum PlayerAction {
@@ -149,17 +177,56 @@ impl State {
         Self {
             map: Map::new(),
             player_position: Player::new(MAP_WIDTH / 2, MAP_HEIGHT / 2),
-            item_position: Item::new(MAP_WIDTH / 3, MAP_HEIGHT / 3),
+            item_position: Some(Item {
+                x_pos_item: MAP_WIDTH / 3,
+                y_pos_item: MAP_HEIGHT / 3,
+            }),
         }
     }
 
-    pub fn transition(self, player_action: PlayerAction, item: Item) -> State {
+    // TODO pick up item
+    // pickup takes: player, state as parameter
+    // when item picked up the state of its is None
+    // the item is then added into the inventory of player (check the max)
+    //
+    pub fn pick_up<R: Runtime>(self, rt: &mut R, player: Player) -> Result<State, RuntimeError> {
+        let x_pos = self.player_position.x_pos;
+        let y_pos = self.player_position.y_pos;
+
+        let x_pos_item: usize = match self.item_position {
+            Some(item) => item.get_x(),
+            _ => todo!(),
+        };
+        let y_pos_item: usize = match self.item_position {
+            Some(item) => item.get_y(),
+            _ => todo!(),
+        };
+
+        if x_pos == x_pos_item && y_pos == y_pos_item {
+            // add item to player inventory
+            let item = Item {
+                x_pos_item,
+                y_pos_item,
+            };
+            let Ok(()) = self.player_position.add_item(rt, item);
+
+            // update the state to none
+            return Ok(State {
+                item_position: None,
+                ..self
+            });
+        }
+
+        todo!()
+    }
+
+    pub fn transition(self, player_action: PlayerAction, player: Player) -> State {
         let next_player = match player_action {
             PlayerAction::MoveRight => self.player_position.move_right(),
             PlayerAction::MoveLeft => self.player_position.move_left(),
             PlayerAction::MoveUp => self.player_position.move_up(),
             PlayerAction::MoveDown => self.player_position.move_down(),
-            PlayerAction::PickUp => Player::pick_up(item),
+            PlayerAction::PickUp => Self::pick_up(self, player),
         };
 
         if self
@@ -285,7 +352,7 @@ fn load_state<R: Runtime>(rt: &mut R) -> Result<State, RuntimeError> {
             Ok(State {
                 map,
                 player_position,
-                item_position,
+                item_position: Some(item_position), //TODO
             })
         }
         // other cases just create new state
@@ -310,7 +377,7 @@ fn update_state<R: Runtime>(rt: &mut R, state: &State) -> Result<(), RuntimeErro
     // start to write from 0
     let () = rt.store_write(&MAP_PATH, &tiles, 0)?;
 
-    // convert vector back to bytes, and store it in the x_pos_path
+    // player position: convert vector back to bytes, and store it in the x_pos_path
     let x_pos = usize::to_be_bytes(state.player_position.x_pos);
     let () = rt.store_write(&X_POS_PATH, &x_pos, 0)?;
 
@@ -369,7 +436,7 @@ pub fn entry<R: Runtime>(rt: &mut R) {
                     _ => None,
                 };
 
-                // TODO: item
+                // TODO: item, get item instead?
                 // Define an item position
                 let item = Item {
                     x_pos_item: MAP_WIDTH / 3,
