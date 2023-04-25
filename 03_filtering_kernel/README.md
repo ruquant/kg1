@@ -23,7 +23,7 @@ $ octez-smart-rollup-wasm-debugger \
 > --commands ./commands.json
 Loaded 2 inputs at level 0
 External message: "This message is for me"
-Evaluation took 400002 ticks so far
+Evaluation took 417738 ticks so far
 Status: Evaluating
 Internal_status: Evaluation succeeded
 ```

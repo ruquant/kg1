@@ -20,6 +20,7 @@ Inbox level: 0 Internal message: level info (block predecessor: BKiHLREqU3JkXfzE
 Inbox level: 0 External message: "This is an external message"
 Inbox level: 0 External message: "And here's another one"
 Inbox level: 0 Internal message: end of level
-Evaluation took 1126770 ticks so far
+Evaluation took 1093784 ticks so far
 Status: Evaluating
+Internal_status: Evaluation succeeded
 ```
