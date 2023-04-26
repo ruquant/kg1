@@ -66,11 +66,12 @@ impl Item {
         }
     }
 
-    pub fn get_x(self) -> usize {
+    // use reference for reading the data
+    pub fn get_x(&self) -> usize {
         self.x_pos_item
     }
 
-    pub fn get_y(self) -> usize {
+    pub fn get_y(&self) -> usize {
         self.y_pos_item
     }
 }
@@ -129,29 +130,37 @@ impl Player {
     }
 
     // add item to inventory
-    pub fn add_item<R: Runtime>(&self, rt: &mut R, item: Item) -> Result<(), RuntimeError> {
+    pub fn add_item(self, item: Item) -> Player {
         let inventory_len = self.inventory.len();
 
         if inventory_len <= MAX_ITEMS {
             let x_pos_item = item.x_pos_item;
             let y_pos_item = item.y_pos_item;
+            let item = Item {
+                x_pos_item,
+                y_pos_item,
+            };
+
+            let mut inventory = self.inventory;
 
             // add item to inventory
-            let inventory: Vec<u8> = self
-                .inventory
-                .iter()
-                .map(|inventory| match inventory {
-                    Item {
-                        x_pos_item,
-                        y_pos_item,
-                    } => 0x06,
-                })
-                .collect();
-            let () = rt.store_write(&INVENTORY_PATH, &inventory, 0)?;
+            // let inventory: Vec<u8> = self
+            //     .inventory
+            //     .iter()
+            //     .map(|inventory| match inventory {
+            //         Item {
+            //             x_pos_item,
+            //             y_pos_item,
+            //         } => 0x06,
+            //     })
+            //     .collect();
+            // let () = rt.store_write(&INVENTORY_PATH, &inventory, 0)?;
 
-            Ok(())
+            inventory.push(item);
+
+            Player { inventory, ..self }
         } else {
-            todo!()
+            self
         }
     }
 }
@@ -189,15 +198,15 @@ impl State {
     // when item picked up the state of its is None
     // the item is then added into the inventory of player (check the max)
     //
-    pub fn pick_up<R: Runtime>(self, rt: &mut R, player: Player) -> Result<State, RuntimeError> {
+    pub fn pick_up(self) -> State {
         let x_pos = self.player_position.x_pos;
         let y_pos = self.player_position.y_pos;
 
-        let x_pos_item: usize = match self.item_position {
+        let x_pos_item: usize = match &self.item_position {
             Some(item) => item.get_x(),
             _ => todo!(),
         };
-        let y_pos_item: usize = match self.item_position {
+        let y_pos_item: usize = match &self.item_position {
             Some(item) => item.get_y(),
             _ => todo!(),
         };
@@ -208,37 +217,49 @@ impl State {
                 x_pos_item,
                 y_pos_item,
             };
-            let Ok(()) = self.player_position.add_item(rt, item);
+            let player = self.player_position.add_item(item);
 
             // update the state to none
-            return Ok(State {
+            State {
                 item_position: None,
-                ..self
-            });
-        }
-
-        todo!()
-    }
-
-    pub fn transition(self, player_action: PlayerAction, player: Player) -> State {
-        let next_player = match player_action {
-            PlayerAction::MoveRight => self.player_position.move_right(),
-            PlayerAction::MoveLeft => self.player_position.move_left(),
-            PlayerAction::MoveUp => self.player_position.move_up(),
-            PlayerAction::MoveDown => self.player_position.move_down(),
-            PlayerAction::PickUp => Self::pick_up(self, player),
-        };
-
-        if self
-            .map
-            .can_enter_tile(next_player.x_pos, next_player.y_pos)
-        {
-            Self {
-                player_position: next_player,
+                player_position: player,
                 ..self
             }
         } else {
             self
+        }
+    }
+
+    fn update_player(self, player: Player) -> State {
+        if self.map.can_enter_tile(player.x_pos, player.y_pos) {
+            State {
+                player_position: player,
+                ..self
+            }
+        } else {
+            self
+        }
+    }
+
+    pub fn transition(self, player_action: PlayerAction) -> State {
+        match player_action {
+            PlayerAction::MoveRight => {
+                let player = self.player_position.clone();
+                self.update_player(player.move_right())
+            }
+            PlayerAction::MoveLeft => {
+                let player = self.player_position.clone();
+                self.update_player(player.move_left())
+            }
+            PlayerAction::MoveUp => {
+                let player = self.player_position.clone();
+                self.update_player(player.move_up())
+            }
+            PlayerAction::MoveDown => {
+                let player = self.player_position.clone();
+                self.update_player(player.move_down())
+            }
+            PlayerAction::PickUp => self.pick_up(),
         }
     }
 }
@@ -255,32 +276,18 @@ fn load_state<R: Runtime>(rt: &mut R) -> Result<State, RuntimeError> {
 
     // inventory
     let inventory_exists = rt.store_has(&INVENTORY_PATH);
-
-    // item position
-    let x_pos_item_exists = rt.store_has(&X_POS_ITEM_PATH);
-    let y_pos_item_exists = rt.store_has(&Y_POS_ITEM_PATH);
-
     // we match them to check if they exist in the storage
-    match (
-        map_exists,
-        x_pos_exists,
-        y_pos_exists,
-        inventory_exists,
-        x_pos_item_exists,
-        y_pos_item_exists,
-    ) {
+    match (map_exists, x_pos_exists, y_pos_exists, inventory_exists) {
         // if there is none state, create a new one
-        (Ok(None), Ok(None), Ok(None), Ok(None), Ok(None), Ok(None)) => {
+        (Ok(None), Ok(None), Ok(None), Ok(None)) => {
+            rt.write_debug("Should be called only one time\n");
             let state = State::new();
             Ok(state)
         }
-        (Err(err), _, _, _, _, _)
-        | (_, Err(err), _, _, _, _)
-        | (_, _, Err(err), _, _, _)
-        | (_, _, _, Err(err), _, _)
-        | (_, _, _, _, Err(err), _)
-        | (_, _, _, _, _, Err(err)) => Err(err),
-        (Ok(Some(_)), Ok(Some(_)), Ok(Some(_)), Ok(Some(_)), Ok(Some(_)), Ok(Some(_))) => {
+        (Err(err), _, _, _) | (_, Err(err), _, _) | (_, _, Err(err), _) | (_, _, _, Err(err)) => {
+            Err(err)
+        }
+        (Ok(Some(_)), Ok(Some(_)), Ok(Some(_)), Ok(Some(_))) => {
             // we have the path, now we read the data from it
             // store_read: know the size of the data, the offset is 0: starting of the bytes (from 0 to max_bytes)
             // store_read_slice: do not know the size of the data, will return the buffer
@@ -295,11 +302,30 @@ fn load_state<R: Runtime>(rt: &mut R) -> Result<State, RuntimeError> {
             // inventory
             let inventory_bytes = rt.store_read(&INVENTORY_PATH, 0, MAX_ITEMS)?;
 
-            // item position
-            let x_pos_item_bytes =
-                rt.store_read(&X_POS_ITEM_PATH, 0, std::mem::size_of::<usize>())?;
-            let y_pos_item_bytes =
-                rt.store_read(&Y_POS_ITEM_PATH, 0, std::mem::size_of::<usize>())?;
+            // item position, check if the path of the item is existed or not
+            let item_position = match (
+                rt.store_has(&X_POS_ITEM_PATH)?,
+                rt.store_has(&Y_POS_ITEM_PATH)?,
+            ) {
+                (Some(_), Some(_)) => {
+                    let x_pos_item_bytes =
+                        rt.store_read(&X_POS_ITEM_PATH, 0, std::mem::size_of::<usize>())?;
+                    let y_pos_item_bytes =
+                        rt.store_read(&Y_POS_ITEM_PATH, 0, std::mem::size_of::<usize>())?;
+
+                    // convert item position
+                    let x_pos_item = usize::from_be_bytes(x_pos_item_bytes.try_into().unwrap());
+                    let y_pos_item = usize::from_be_bytes(y_pos_item_bytes.try_into().unwrap());
+
+                    // Define a player position
+                    let item_position = Item {
+                        x_pos_item,
+                        y_pos_item,
+                    };
+                    Some(item_position)
+                }
+                _ => None,
+            };
 
             // convert
             // map each bytes to idendify which bytes is a Floor or a Wall
@@ -319,23 +345,14 @@ fn load_state<R: Runtime>(rt: &mut R) -> Result<State, RuntimeError> {
             let x_pos = usize::from_be_bytes(x_pos.try_into().unwrap());
             let y_pos = usize::from_be_bytes(y_pos.try_into().unwrap());
 
-            // convert item position
-            let x_pos_item = usize::from_be_bytes(x_pos_item_bytes.try_into().unwrap());
-            let y_pos_item = usize::from_be_bytes(y_pos_item_bytes.try_into().unwrap());
-
-            // Define a player position
-            let item_position = Item {
-                x_pos_item,
-                y_pos_item,
-            };
-
             // convert vector of inventory to bytes
             let inventory: Vec<Item> = inventory_bytes
                 .iter()
                 .filter_map(|bytes| match bytes {
                     0x06 => Some(Item {
-                        x_pos_item,
-                        y_pos_item,
+                        // NOTE: the item maybe not need to have the position
+                        x_pos_item: 0,
+                        y_pos_item: 0,
                     }),
                     _ => None,
                 })
@@ -352,7 +369,7 @@ fn load_state<R: Runtime>(rt: &mut R) -> Result<State, RuntimeError> {
             Ok(State {
                 map,
                 player_position,
-                item_position: Some(item_position), //TODO
+                item_position,
             })
         }
         // other cases just create new state
@@ -400,12 +417,23 @@ fn update_state<R: Runtime>(rt: &mut R, state: &State) -> Result<(), RuntimeErro
     let () = rt.store_write(&INVENTORY_PATH, &inventory, 0)?;
 
     // item
-    let x_pos_item = usize::to_be_bytes(state.item_position.x_pos_item);
-    let () = rt.store_write(&X_POS_ITEM_PATH, &x_pos_item, 0)?;
 
-    let y_pos_item = usize::to_be_bytes(state.item_position.y_pos_item);
-    let () = rt.store_write(&Y_POS_ITEM_PATH, &y_pos_item, 0)?;
+    match &state.item_position {
+        None => {
+            let () = rt.store_delete(&X_POS_ITEM_PATH)?;
+            let () = rt.store_delete(&Y_POS_ITEM_PATH)?;
+        }
+        Some(item_position) => {
+            let x_pos_item_bytes = usize::to_be_bytes(item_position.x_pos_item).to_vec();
+            // to_state = 0x00, item position encoded in 4 bytes
+            let () = rt.store_write(&X_POS_ITEM_PATH, &x_pos_item_bytes, 0)?;
 
+            // save for y position, we need to have to_save define again
+            let y_pos_item_bytes = usize::to_be_bytes(item_position.y_pos_item).to_vec();
+            // 0x00, item position encoded in 4 bytes
+            let () = rt.store_write(&Y_POS_ITEM_PATH, &y_pos_item_bytes, 0)?;
+        }
+    }
     Ok(())
 }
 
@@ -418,55 +446,41 @@ pub fn entry<R: Runtime>(rt: &mut R) {
         let input = rt.read_input();
         match input {
             Ok(Some(message)) => {
-                // message is a list of byte
-                let bytes = message.as_ref();
-                let player_action = match bytes {
-                    // First element or an array: 0x00: internal, 0x01: external
-                    // second element define the bytes of player action
-                    // move up
-                    [0x01, 0x01] => Some(PlayerAction::MoveUp),
-                    // move down
-                    [0x01, 0x02] => Some(PlayerAction::MoveDown),
-                    // move left
-                    [0x01, 0x03] => Some(PlayerAction::MoveLeft),
-                    // move right
-                    [0x01, 0x04] => Some(PlayerAction::MoveRight),
-                    // pickup
-                    [0x01, 0x05] => Some(PlayerAction::PickUp),
-                    _ => None,
-                };
+                let state: Result<State, RuntimeError> = load_state(rt);
+                match state {
+                    Err(_) => {}
+                    Ok(state) => {
+                        // message is a list of byte
+                        let bytes = message.as_ref();
+                        let player_action = match bytes {
+                            // First element or an array: 0x00: internal, 0x01: external
+                            // second element define the bytes of player action
+                            // move up
+                            [0x01, 0x01] => Some(PlayerAction::MoveUp),
+                            // move down
+                            [0x01, 0x02] => Some(PlayerAction::MoveDown),
+                            // move left
+                            [0x01, 0x03] => Some(PlayerAction::MoveLeft),
+                            // move right
+                            [0x01, 0x04] => Some(PlayerAction::MoveRight),
+                            // pickup
+                            [0x01, 0x05] => Some(PlayerAction::PickUp),
+                            _ => None,
+                        };
 
-                // TODO: item, get item instead?
-                // Define an item position
-                let item = Item {
-                    x_pos_item: MAP_WIDTH / 3,
-                    y_pos_item: MAP_HEIGHT / 3,
-                };
-
-                // player and item
-                match player_action {
-                    Some(player_action) => {
-                        rt.write_debug("Message is deserialized");
-                        let state: Result<State, RuntimeError> = load_state(rt);
-                        // match the state
-                        match state {
-                            Err(err) => rt.write_debug(&format!("error: {:?}", err)),
-                            Ok(state) => {
+                        // player and item
+                        let next_state = match player_action {
+                            Some(player_action) => {
+                                rt.write_debug("Message is deserialized");
                                 rt.write_debug("Calling transtion");
-
-                                let next_state = state.transition(player_action, item);
-                                let res = update_state(rt, &next_state);
-                                match res {
-                                    Ok(_) => {}
-                                    Err(err) => {
-                                        rt.write_debug(&format!("State is not saved: {:?}", err));
-                                    }
-                                }
+                                state.transition(player_action)
                             }
-                        }
-                    }
-                    None => {
-                        rt.write_debug("Message is NOT deserialized");
+                            None => {
+                                rt.write_debug("Message is NOT deserialized");
+                                state
+                            }
+                        };
+                        let _ = update_state(rt, &next_state);
                     }
                 }
             }

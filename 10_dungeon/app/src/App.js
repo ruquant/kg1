@@ -7,7 +7,7 @@ const App = () => {
   const [player, updatePlayer] = useState({ x: 0, y: 0 });
 
   // place default item at 3x3
-  const [item, updateItem] = useState({ x_item: 3, y_item: 3 });
+  const [item, updateItem] = useState(null);
 
   useEffect(() => {
     // starting an interval
@@ -38,23 +38,28 @@ const App = () => {
       const res3 = await fetch(
         "http://127.0.0.1:8080/state/value?path=/state/item/x_pos_item"
       );
-      // Getting the response as text
-      const x_pos_item_bytes = await res3.text();
-      // Converting the text as number
-      const x_pos_item = Number.parseInt(x_pos_item_bytes, 16);
-
       const res4 = await fetch(
         "http://127.0.0.1:8080/state/value?path=/state/item/y_pos_item"
       );
-      // Getting the response as text
-      const y_pos_item_bytes = await res4.text();
-      // Converting the text as number
-      const y_pos_item = Number.parseInt(y_pos_item_bytes, 16);
-
-      updateItem({
-        x_item: x_pos_item,
-        y_item: y_pos_item,
-      });
+      // we check the position after the pickup there will be none
+      if(res3.ok && res4.ok) {
+        // Getting the response as text
+        const x_pos_item_bytes = await res3.text();
+        // Converting the text as number
+        const x_pos_item = Number.parseInt(x_pos_item_bytes, 16);
+        
+        // Getting the response as text
+        const y_pos_item_bytes = await res4.text();
+        // Converting the text as number
+        const y_pos_item = Number.parseInt(y_pos_item_bytes, 16);
+        
+        updateItem({
+          x_item: x_pos_item,
+          y_item: y_pos_item,
+        });
+      } else {
+        updateItem(null);
+      }
 
     }, 500); // The interval duration is 500ms
     return () => {
@@ -107,7 +112,7 @@ const App = () => {
                         );
                       }
                       // place item on cell
-                      if (map_x === item.x_item && map_y === item.y_item) {
+                      if (!!item && map_x === item.x_item && map_y === item.y_item) {
                         return (
                           <div
                             key={`${map_x},${map_x}`}
