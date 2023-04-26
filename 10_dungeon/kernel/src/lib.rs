@@ -1,11 +1,14 @@
+mod map;
+mod player;
+use map::{Map, TileType, MAP_HEIGHT, MAP_WIDTH};
+use player::{Player, MAX_ITEMS};
+mod item;
+use item::Item;
 use tezos_smart_rollup_entrypoint::kernel_entry;
 use tezos_smart_rollup_host::{
     path::RefPath,
     runtime::{Runtime, RuntimeError},
 };
-
-const MAP_WIDTH: usize = 32;
-const MAP_HEIGHT: usize = 32;
 
 const MAP_PATH: RefPath = RefPath::assert_from(b"/state/map");
 const X_POS_PATH: RefPath = RefPath::assert_from(b"/state/player/x_pos");
@@ -14,158 +17,7 @@ const INVENTORY_PATH: RefPath = RefPath::assert_from(b"/state/player/inventory")
 const X_POS_ITEM_PATH: RefPath = RefPath::assert_from(b"/state/item/x_pos_item");
 const Y_POS_ITEM_PATH: RefPath = RefPath::assert_from(b"/state/item/y_pos_item");
 
-const MAX_ITEMS: usize = 2;
-
-#[derive(Clone, PartialEq)]
-pub enum TileType {
-    Wall,
-    Floor,
-}
-
-// Map
-#[derive(Clone, PartialEq)]
-pub struct Map {
-    pub tiles: Vec<TileType>,
-}
-
-pub fn map_idx(x: usize, y: usize) -> usize {
-    (y * MAP_WIDTH) + x
-}
-
-impl Map {
-    pub fn new() -> Self {
-        Self {
-            tiles: vec![TileType::Floor; MAP_WIDTH * MAP_HEIGHT],
-        }
-    }
-
-    // player cannot walk off the edge of the map
-    pub fn in_bounds(&self, x: usize, y: usize) -> bool {
-        x < MAP_WIDTH && y < MAP_HEIGHT
-    }
-
-    // player can walk on floor but not through walls
-    pub fn can_enter_tile(&self, x: usize, y: usize) -> bool {
-        self.in_bounds(x, y) && self.tiles[map_idx(x, y)] == TileType::Floor
-    }
-}
-
-// Item
-
-#[derive(Clone, PartialEq)]
-pub struct Item {
-    pub x_pos_item: usize,
-    pub y_pos_item: usize,
-}
-
-impl Item {
-    pub fn new(x_pos_item: usize, y_pos_item: usize) -> Self {
-        Self {
-            x_pos_item,
-            y_pos_item,
-        }
-    }
-
-    // use reference for reading the data
-    pub fn get_x(&self) -> usize {
-        self.x_pos_item
-    }
-
-    pub fn get_y(&self) -> usize {
-        self.y_pos_item
-    }
-}
-
-// Player
-#[derive(Clone, PartialEq)]
-pub struct Player {
-    pub x_pos: usize,
-    pub y_pos: usize,
-    pub inventory: Vec<Item>,
-}
-
-impl Player {
-    pub fn new(x_pos: usize, y_pos: usize) -> Self {
-        Self {
-            x_pos,
-            y_pos,
-            inventory: Vec::new(),
-        }
-    }
-
-    pub fn move_up(&self) -> Player {
-        usize::checked_sub(self.y_pos, 1)
-            .map(|y_pos| Self {
-                y_pos,
-                x_pos: self.x_pos,
-                inventory: self.inventory.clone(),
-            })
-            .unwrap_or(self.clone())
-    }
-
-    pub fn move_down(&self) -> Player {
-        Self {
-            y_pos: self.y_pos + 1,
-            x_pos: self.x_pos,
-            inventory: self.inventory.clone(),
-        }
-    }
-
-    pub fn move_left(&self) -> Player {
-        usize::checked_sub(self.x_pos, 1)
-            .map(|x_pos| Self {
-                x_pos,
-                y_pos: self.y_pos,
-                inventory: self.inventory.clone(),
-            })
-            .unwrap_or(self.clone())
-    }
-
-    pub fn move_right(&self) -> Player {
-        Self {
-            x_pos: self.x_pos + 1,
-            y_pos: self.y_pos,
-            inventory: self.inventory.clone(),
-        }
-    }
-
-    // add item to inventory
-    pub fn add_item(self, item: Item) -> Player {
-        let inventory_len = self.inventory.len();
-
-        if inventory_len <= MAX_ITEMS {
-            let x_pos_item = item.x_pos_item;
-            let y_pos_item = item.y_pos_item;
-            let item = Item {
-                x_pos_item,
-                y_pos_item,
-            };
-
-            let mut inventory = self.inventory;
-
-            // add item to inventory
-            // let inventory: Vec<u8> = self
-            //     .inventory
-            //     .iter()
-            //     .map(|inventory| match inventory {
-            //         Item {
-            //             x_pos_item,
-            //             y_pos_item,
-            //         } => 0x06,
-            //     })
-            //     .collect();
-            // let () = rt.store_write(&INVENTORY_PATH, &inventory, 0)?;
-
-            inventory.push(item);
-
-            Player { inventory, ..self }
-        } else {
-            self
-        }
-    }
-}
-
-// State
+// Define State
 #[derive(Clone, PartialEq)]
 pub struct State {
     map: Map,
@@ -193,22 +45,17 @@ impl State {
         }
     }
 
-    // TODO pick up item
-    // pickup takes: player, state as parameter
-    // when item picked up the state of its is None
-    // the item is then added into the inventory of player (check the max)
-    //
     pub fn pick_up(self) -> State {
         let x_pos = self.player_position.x_pos;
         let y_pos = self.player_position.y_pos;
 
         let x_pos_item: usize = match &self.item_position {
             Some(item) => item.get_x(),
-            _ => todo!(),
+            _ => 0,
         };
         let y_pos_item: usize = match &self.item_position {
             Some(item) => item.get_y(),
-            _ => todo!(),
+            _ => 0,
         };
 
         if x_pos == x_pos_item && y_pos == y_pos_item {
@@ -448,7 +295,9 @@ pub fn entry<R: Runtime>(rt: &mut R) {
             Ok(Some(message)) => {
                 let state: Result<State, RuntimeError> = load_state(rt);
                 match state {
-                    Err(_) => {}
+                    Err(err) => {
+                        rt.write_debug(&format!("Error {:?}", err));
+                    }
                     Ok(state) => {
                         // message is a list of byte
                         let bytes = message.as_ref();

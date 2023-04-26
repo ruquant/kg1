@@ -338,6 +338,10 @@ The sequencer is saving its state into the filesystem under the folder `/tmp/seq
 If you want to restart a sequencer from a fresh state you just have to delete this folder
 Otherwise the sequencer will use this old state as the current one
 
+```bash
+rm -rf /tmp/sequencer-storage
+```
+
 # Starting the application
 
 To start the application you have to run the sequencer (see above) and then run the front-end application as follow:
@@ -353,4 +357,4 @@ And then you can start it with yarn
 yarn start
 ```
 
-An new tab browser should open on "http://localhost:3000/"
+An new tab browser should open on "http://localhost:3000/" (or any other port)

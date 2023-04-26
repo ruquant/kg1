@@ -2,11 +2,30 @@ import logo from "./logo.svg";
 import "./App.css";
 import { useEffect, useState } from "react";
 
+
 const App = () => {
+
+  // handlekey
+ /*const handleKey = (e) => {
+     // 37 = left, 38 = up, 39 = right, 40 = down
+     if (e.key === 38) {
+       move("01")
+     } else if (e.key === 40) {
+       move("02")
+     } else if (e.key === 37) {
+       move("03")
+     } else if (e.key === 39) {
+       move("04")
+     } else if (e.key === 'p') {
+        move("05")
+     }   
+   }*/
+ 
+
   // 32 * 32
   const [player, updatePlayer] = useState({ x: 0, y: 0 });
 
-  // place default item at 3x3
+  // place default item at null
   const [item, updateItem] = useState(null);
 
   useEffect(() => {
@@ -41,6 +60,7 @@ const App = () => {
       const res4 = await fetch(
         "http://127.0.0.1:8080/state/value?path=/state/item/y_pos_item"
       );
+
       // we check the position after the pickup there will be none
       if(res3.ok && res4.ok) {
         // Getting the response as text
@@ -81,14 +101,14 @@ const App = () => {
     });
   };
 
-  const moveDown = move("02");
+  // Player actions
   const moveUp = move("01");
+  const moveDown = move("02");
   const moveLeft = move("03");
   const moveRight = move("04");
-
-  // TODO: pickup item
   const pickUp = move("05")
 
+  // App interface
   return (
     <div className="App">
       <header className="App-header">
@@ -98,9 +118,11 @@ const App = () => {
             .fill(0)
             .map((_, map_y) => {
               return (
+                // draw the map vertical
                 <div key={map_y} className="line">
                   {Array(32)
                     .fill(0)
+                    // draw the map horizontal
                     .map((_, map_x) => {
                       // place player on cell
                       if (map_x === player.x && map_y === player.y) {
@@ -118,7 +140,7 @@ const App = () => {
                             key={`${map_x},${map_x}`}
                             className="cell item"
                           ></div>
-                        );
+                        )
                       }
                       
                       // the rest are normal cell
@@ -142,7 +164,6 @@ const App = () => {
           <button onClick={moveRight}>right</button>
           <button onClick={pickUp}>pick up</button>
         </div>
-
         
       </header>
     </div>

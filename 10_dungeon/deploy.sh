@@ -70,3 +70,23 @@ send_message=$(octez-client -p ProtoALphaAL \
 # debug the kernel by the debuger tool
 octez-smart-wasm-debuger rollup/kernel.wasm --inputs kernel/inputs.json
 
+##########################################
+# Deploy dungeon game with sequencer
+
+# remove the old storage of sequencer to start a fresh game
+rm -rf /tmp/sequencer-storage
+
+# run tezos-node
+cd tezos
+./octez-node run --rpc-addr 127.0.0.1
+
+# run sequencer-http server
+cd pistachio/sequencer/sequencer-http
+cargo run
+
+# load React App
+cd pistachio/10_dungeon/app
+yarn install
+yarn start
+
+
