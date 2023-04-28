@@ -845,7 +845,7 @@ checksum = "a2eb9349b6444b326872e140eb1cf5e7c522154d69e7a0ffb0fb81c06b37543f"
 name = "storage-kernel"
 version = "0.1.0"
 dependencies = [
- "tezos-smart-rollup 0.1.0 (git+https://gitlab.com/tezos/tezos)",
+ "tezos-smart-rollup 0.1.0 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
 
 [[package]]
@@ -927,6 +927,7 @@ dependencies = [
  "tezos-smart-rollup-encoding 0.1.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "tezos-smart-rollup-entrypoint 0.1.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "tezos-smart-rollup-host 0.1.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "tezos-smart-rollup-mock 0.1.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "tezos-smart-rollup-storage 0.1.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "tezos_crypto_rs",
  "tezos_data_encoding",
@@ -957,7 +958,7 @@ dependencies = [
  "tezos-smart-rollup-encoding 0.1.0 (git+https://gitlab.com/tezos/tezos)",
  "tezos-smart-rollup-entrypoint 0.1.0 (git+https://gitlab.com/tezos/tezos)",
  "tezos-smart-rollup-host 0.1.0 (git+https://gitlab.com/tezos/tezos)",
- "tezos-smart-rollup-mock",
+ "tezos-smart-rollup-mock 0.1.0 (git+https://gitlab.com/tezos/tezos)",
  "tezos-smart-rollup-storage 0.1.0 (git+https://gitlab.com/tezos/tezos)",
  "tezos_crypto_rs",
  "tezos_data_encoding",
@@ -1128,6 +1129,20 @@ dependencies = [
  "tezos-smart-rollup-core 0.1.0 (git+https://gitlab.com/tezos/tezos)",
  "tezos_crypto_rs",
  "thiserror",
+]
+
+[[package]]
+name = "tezos-smart-rollup-mock"
+version = "0.1.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "19e537fb178e797a0afc40c23a89c3ca9c6e3fbe32a28b0dc16608aed6f0a29a"
+dependencies = [
+ "hex",
+ "tezos-smart-rollup-core 0.1.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "tezos-smart-rollup-encoding 0.1.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "tezos-smart-rollup-host 0.1.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "tezos_crypto_rs",
+ "tezos_data_encoding",
 ]
 
 [[package]]
