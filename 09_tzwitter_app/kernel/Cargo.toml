@@ -7,8 +7,7 @@ edition = "2021"
 crate-type = ["cdylib", "lib"]
 
 [dependencies]
-tezos-smart-rollup = { git = "https://gitlab.com/tezos/tezos", features = ["testing"] }
-tezos-smart-rollup-encoding = { git = "https://gitlab.com/tezos/tezos" }
+tezos-smart-rollup = "0.1.0"
 tezos_data_encoding = "0.4.4"
 
 # To hash everything

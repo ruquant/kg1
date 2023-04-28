@@ -31,7 +31,7 @@ pub enum Error {
     FromBase58CheckError,
     BigIntError,
     BinError(tezos_data_encoding::enc::BinError),
-    EntrypointError(tezos_smart_rollup_encoding::entrypoint::EntrypointError),
+    EntrypointError(tezos_smart_rollup::types::EntrypointError),
 }
 
 impl ToString for Error {
@@ -72,9 +72,6 @@ register_error!(Ed25519Compact, ed25519_compact::Error);
 register_error!(PathError, tezos_smart_rollup::storage::path::PathError);
 register_error!(Runtime, tezos_smart_rollup::host::RuntimeError);
 register_error!(BinError, tezos_data_encoding::enc::BinError);
-register_error!(
-    EntrypointError,
-    tezos_smart_rollup_encoding::entrypoint::EntrypointError
-);
+register_error!(EntrypointError, tezos_smart_rollup::types::EntrypointError);
 
 pub type Result<A> = std::result::Result<A, Error>;
