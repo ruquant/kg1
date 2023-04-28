@@ -159,7 +159,7 @@ name = "counter-kernel"
 version = "0.1.0"
 dependencies = [
  "serde",
- "tezos-smart-rollup 0.1.0 (git+https://gitlab.com/tezos/tezos)",
+ "tezos-smart-rollup 0.1.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "tezos_data_encoding",
 ]
 
