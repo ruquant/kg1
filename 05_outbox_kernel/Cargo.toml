@@ -7,6 +7,6 @@ edition = "2021"
 crate-type = ["cdylib", "lib"]
 
 [dependencies]
-tezos-smart-rollup = { git = "https://gitlab.com/tezos/tezos", features = ["testing"] }
+tezos-smart-rollup = {version = "0.1.0", features = ["testing"]}
 tezos_data_encoding = {version = "0.4"}
 tezos_crypto_rs = { version = "0.4", default-features = false }

@@ -593,7 +593,7 @@ checksum = "ceedf44fb00f2d1984b0bc98102627ce622e083e49a5bacdb3e514fa4238e267"
 name = "outbox-kernel"
 version = "0.1.0"
 dependencies = [
- "tezos-smart-rollup 0.1.0 (git+https://gitlab.com/tezos/tezos)",
+ "tezos-smart-rollup 0.1.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "tezos_crypto_rs",
  "tezos_data_encoding",
 ]
