@@ -7,7 +7,7 @@ edition = "2021"
 crate-type = ["cdylib", "lib"]
 
 [dependencies]
-tezos-smart-rollup = { git = "https://gitlab.com/marigold/tezos",  rev = "046281d4494560ed96796bd7ffe9053e573654f3" }
+tezos-smart-rollup = "0.1.0"
 tezos_data_encoding = { version = "0.4" }
 tezos_data_encoding_derive = { version = "0.4" }
 nom = "6.1"

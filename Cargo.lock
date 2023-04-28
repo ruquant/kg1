@@ -1393,7 +1393,7 @@ dependencies = [
  "hex",
  "hex-literal",
  "nom",
- "tezos-smart-rollup 0.1.0 (git+https://gitlab.com/marigold/tezos?rev=046281d4494560ed96796bd7ffe9053e573654f3)",
+ "tezos-smart-rollup 0.1.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "tezos_crypto_rs",
  "tezos_data_encoding",
  "tezos_data_encoding_derive",
