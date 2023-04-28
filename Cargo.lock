@@ -210,7 +210,7 @@ checksum = "382ce8820a5bb815055d3553a610e8cb542b2d767bbacea99038afda96cd760d"
 name = "debug-kernel"
 version = "0.1.0"
 dependencies = [
- "tezos-smart-rollup 0.1.0 (git+https://gitlab.com/tezos/tezos)",
+ "tezos-smart-rollup 0.1.0 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
 
 [[package]]
@@ -919,6 +919,22 @@ dependencies = [
 [[package]]
 name = "tezos-smart-rollup"
 version = "0.1.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "4443c6587cb107e2a53aae6897f82224700a1ec6712b6f4667c76e2a21977de3"
+dependencies = [
+ "tezos-smart-rollup-core 0.1.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "tezos-smart-rollup-debug 0.1.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "tezos-smart-rollup-encoding 0.1.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "tezos-smart-rollup-entrypoint 0.1.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "tezos-smart-rollup-host 0.1.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "tezos-smart-rollup-storage 0.1.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "tezos_crypto_rs",
+ "tezos_data_encoding",
+]
+
+[[package]]
+name = "tezos-smart-rollup"
+version = "0.1.0"
 source = "git+https://gitlab.com/marigold/tezos?rev=046281d4494560ed96796bd7ffe9053e573654f3#046281d4494560ed96796bd7ffe9053e573654f3"
 dependencies = [
  "tezos-smart-rollup-core 0.1.0 (git+https://gitlab.com/marigold/tezos?rev=046281d4494560ed96796bd7ffe9053e573654f3)",
@@ -950,6 +966,12 @@ dependencies = [
 [[package]]
 name = "tezos-smart-rollup-core"
 version = "0.1.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "affae569ebcfb1c8c6eebc29a4cf7adb7d33cf27651d3342fda4dd5d19e86120"
+
+[[package]]
+name = "tezos-smart-rollup-core"
+version = "0.1.0"
 source = "git+https://gitlab.com/marigold/tezos?rev=046281d4494560ed96796bd7ffe9053e573654f3#046281d4494560ed96796bd7ffe9053e573654f3"
 
 [[package]]
@@ -960,6 +982,16 @@ source = "git+https://gitlab.com/tezos/tezos#3518b9cd8cfa4c18da96173af8131b6a5ec
 [[package]]
 name = "tezos-smart-rollup-debug"
 version = "0.1.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "1cad3acd5dd1f0eb7d0888547897f4507030d420e70bad075fd78e974e38f1fe"
+dependencies = [
+ "tezos-smart-rollup-core 0.1.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "tezos-smart-rollup-host 0.1.0 (registry+https://github.com/rust-lang/crates.io-index)",
+]
+
+[[package]]
+name = "tezos-smart-rollup-debug"
+version = "0.1.0"
 source = "git+https://gitlab.com/marigold/tezos?rev=046281d4494560ed96796bd7ffe9053e573654f3#046281d4494560ed96796bd7ffe9053e573654f3"
 dependencies = [
  "tezos-smart-rollup-core 0.1.0 (git+https://gitlab.com/marigold/tezos?rev=046281d4494560ed96796bd7ffe9053e573654f3)",
@@ -978,6 +1010,25 @@ dependencies = [
 [[package]]
 name = "tezos-smart-rollup-encoding"
 version = "0.1.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "605e9df63679da72195cd1b51e4caed1b2310e21c4be41f2a3d233e38892f87c"
+dependencies = [
+ "hex",
+ "nom",
+ "num-bigint",
+ "num-traits",
+ "tezos-smart-rollup-core 0.1.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "tezos-smart-rollup-host 0.1.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "tezos_crypto_rs",
+ "tezos_data_encoding",
+ "tezos_data_encoding_derive",
+ "thiserror",
+ "time",
+]
+
+[[package]]
+name = "tezos-smart-rollup-encoding"
+version = "0.1.0"
 source = "git+https://gitlab.com/marigold/tezos?rev=046281d4494560ed96796bd7ffe9053e573654f3#046281d4494560ed96796bd7ffe9053e573654f3"
 dependencies = [
  "hex",
@@ -1009,6 +1060,19 @@ dependencies = [
  "tezos_data_encoding_derive",
  "thiserror",
  "time",
+]
+
+[[package]]
+name = "tezos-smart-rollup-entrypoint"
+version = "0.1.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "541fcf52afbdd59726aca82cffd5de4986b295aef6ac485d69de9313f5689b21"
+dependencies = [
+ "dlmalloc",
+ "tezos-smart-rollup-core 0.1.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "tezos-smart-rollup-debug 0.1.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "tezos-smart-rollup-host 0.1.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "tezos-smart-rollup-panic-hook 0.1.0 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
 
 [[package]]
@@ -1033,6 +1097,17 @@ dependencies = [
  "tezos-smart-rollup-debug 0.1.0 (git+https://gitlab.com/tezos/tezos)",
  "tezos-smart-rollup-host 0.1.0 (git+https://gitlab.com/tezos/tezos)",
  "tezos-smart-rollup-panic-hook 0.1.0 (git+https://gitlab.com/tezos/tezos)",
+]
+
+[[package]]
+name = "tezos-smart-rollup-host"
+version = "0.1.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "7f0f14c6090a6bb4b85292906d56cabd19d9cee8ff0703311a47da55ec2b9ed9"
+dependencies = [
+ "tezos-smart-rollup-core 0.1.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "tezos_crypto_rs",
+ "thiserror",
 ]
 
 [[package]]
@@ -1071,6 +1146,15 @@ dependencies = [
 [[package]]
 name = "tezos-smart-rollup-panic-hook"
 version = "0.1.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "0639849d0b4ef9c537d1db276e1a800135e13ac49247171392f5a759119e3e9c"
+dependencies = [
+ "tezos-smart-rollup-core 0.1.0 (registry+https://github.com/rust-lang/crates.io-index)",
+]
+
+[[package]]
+name = "tezos-smart-rollup-panic-hook"
+version = "0.1.0"
 source = "git+https://gitlab.com/marigold/tezos?rev=046281d4494560ed96796bd7ffe9053e573654f3#046281d4494560ed96796bd7ffe9053e573654f3"
 dependencies = [
  "tezos-smart-rollup-core 0.1.0 (git+https://gitlab.com/marigold/tezos?rev=046281d4494560ed96796bd7ffe9053e573654f3)",
@@ -1082,6 +1166,19 @@ version = "0.1.0"
 source = "git+https://gitlab.com/tezos/tezos#3518b9cd8cfa4c18da96173af8131b6a5ecf5f13"
 dependencies = [
  "tezos-smart-rollup-core 0.1.0 (git+https://gitlab.com/tezos/tezos)",
+]
+
+[[package]]
+name = "tezos-smart-rollup-storage"
+version = "0.1.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "071b44d9235ba5a29bb101e6d418b5b33766550e3c1eb1ed5431e5b1da9be76b"
+dependencies = [
+ "tezos-smart-rollup-core 0.1.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "tezos-smart-rollup-debug 0.1.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "tezos-smart-rollup-encoding 0.1.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "tezos-smart-rollup-host 0.1.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "thiserror",
 ]
 
 [[package]]
