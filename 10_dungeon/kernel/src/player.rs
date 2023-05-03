@@ -1,4 +1,4 @@
-use crate::Item;
+use crate::item::Item;
 
 pub const MAX_ITEMS: usize = 2;
 
@@ -59,13 +59,6 @@ impl Player {
         let inventory_len = self.inventory.len();
 
         if inventory_len <= MAX_ITEMS {
-            let x_pos_item = item.x_pos_item;
-            let y_pos_item = item.y_pos_item;
-            let item = Item {
-                x_pos_item,
-                y_pos_item,
-            };
-
             let mut inventory = self.inventory;
 
             inventory.push(item);

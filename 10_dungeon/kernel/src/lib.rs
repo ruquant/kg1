@@ -1,9 +1,11 @@
 mod map;
 mod player;
-use map::{Map, TileType, MAP_HEIGHT, MAP_WIDTH};
+
+use crate::TileType::Floor;
+use map::{map_idx, Map, TileType, MAP_HEIGHT, MAP_WIDTH};
 use player::{Player, MAX_ITEMS};
 mod item;
-use item::Item;
+use crate::{item::Item, Item::Potion, Item::Sword};
 use tezos_smart_rollup_entrypoint::kernel_entry;
 use tezos_smart_rollup_host::{
     path::RefPath,
@@ -11,18 +13,16 @@ use tezos_smart_rollup_host::{
 };
 
 const MAP_PATH: RefPath = RefPath::assert_from(b"/state/map");
+
 const X_POS_PATH: RefPath = RefPath::assert_from(b"/state/player/x_pos");
 const Y_POS_PATH: RefPath = RefPath::assert_from(b"/state/player/y_pos");
 const INVENTORY_PATH: RefPath = RefPath::assert_from(b"/state/player/inventory");
-const X_POS_ITEM_PATH: RefPath = RefPath::assert_from(b"/state/item/x_pos_item");
-const Y_POS_ITEM_PATH: RefPath = RefPath::assert_from(b"/state/item/y_pos_item");
 
 // Define State
 #[derive(Clone, PartialEq)]
 pub struct State {
     map: Map,
     player_position: Player,
-    item_position: Option<Item>,
 }
 
 pub enum PlayerAction {
@@ -38,10 +38,6 @@ impl State {
         Self {
             map: Map::new(),
             player_position: Player::new(MAP_WIDTH / 2, MAP_HEIGHT / 2),
-            item_position: Some(Item {
-                x_pos_item: MAP_WIDTH / 3,
-                y_pos_item: MAP_HEIGHT / 3,
-            }),
         }
     }
 
@@ -49,31 +45,25 @@ impl State {
         let x_pos = self.player_position.x_pos;
         let y_pos = self.player_position.y_pos;
 
-        let x_pos_item: usize = match &self.item_position {
-            Some(item) => item.get_x(),
-            _ => 0,
-        };
-        let y_pos_item: usize = match &self.item_position {
-            Some(item) => item.get_y(),
-            _ => 0,
-        };
+        let idx = &self.map.tiles[map_idx(x_pos, y_pos)];
 
-        if x_pos == x_pos_item && y_pos == y_pos_item {
-            // add item to player inventory
-            let item = Item {
-                x_pos_item,
-                y_pos_item,
-            };
-            let player = self.player_position.add_item(item);
-
-            // update the state to none
-            State {
-                item_position: None,
-                player_position: player,
-                ..self
+        match idx {
+            Floor(Some(Potion)) => {
+                let player_position = self.player_position.add_item(Potion);
+                State {
+                    player_position,
+                    ..self
+                }
             }
-        } else {
-            self
+            Floor(Some(Sword)) => {
+                let player_position = self.player_position.add_item(Sword);
+                State {
+                    player_position,
+                    ..self
+                }
+            }
+            Floor(None) => self,
+            _ => self,
         }
     }
 
@@ -149,38 +139,15 @@ fn load_state<R: Runtime>(rt: &mut R) -> Result<State, RuntimeError> {
             // inventory
             let inventory_bytes = rt.store_read(&INVENTORY_PATH, 0, MAX_ITEMS)?;
 
-            // item position, check if the path of the item is existed or not
-            let item_position = match (
-                rt.store_has(&X_POS_ITEM_PATH)?,
-                rt.store_has(&Y_POS_ITEM_PATH)?,
-            ) {
-                (Some(_), Some(_)) => {
-                    let x_pos_item_bytes =
-                        rt.store_read(&X_POS_ITEM_PATH, 0, std::mem::size_of::<usize>())?;
-                    let y_pos_item_bytes =
-                        rt.store_read(&Y_POS_ITEM_PATH, 0, std::mem::size_of::<usize>())?;
-
-                    // convert item position
-                    let x_pos_item = usize::from_be_bytes(x_pos_item_bytes.try_into().unwrap());
-                    let y_pos_item = usize::from_be_bytes(y_pos_item_bytes.try_into().unwrap());
-
-                    // Define a player position
-                    let item_position = Item {
-                        x_pos_item,
-                        y_pos_item,
-                    };
-                    Some(item_position)
-                }
-                _ => None,
-            };
-
             // convert
             // map each bytes to idendify which bytes is a Floor or a Wall
             let tiles: Vec<TileType> = map_bytes
                 .iter()
                 .filter_map(|bytes| match bytes {
-                    0x01 => Some(TileType::Floor),
-                    0x02 => Some(TileType::Wall),
+                    0x01 => Some(TileType::Floor(Some(Sword))),
+                    0x02 => Some(TileType::Floor(Some(Potion))),
+                    0x03 => Some(TileType::Floor(None)),
+                    0x04 => Some(TileType::Wall),
                     _ => None,
                 })
                 .collect();
@@ -196,11 +163,8 @@ fn load_state<R: Runtime>(rt: &mut R) -> Result<State, RuntimeError> {
             let inventory: Vec<Item> = inventory_bytes
                 .iter()
                 .filter_map(|bytes| match bytes {
-                    0x06 => Some(Item {
-                        // NOTE: the item maybe not need to have the position
-                        x_pos_item: 0,
-                        y_pos_item: 0,
-                    }),
+                    0x05 => Some(Item::Sword),
+                    0x06 => Some(Item::Potion),
                     _ => None,
                 })
                 .collect();
@@ -216,7 +180,6 @@ fn load_state<R: Runtime>(rt: &mut R) -> Result<State, RuntimeError> {
             Ok(State {
                 map,
                 player_position,
-                item_position,
             })
         }
         // other cases just create new state
@@ -233,8 +196,10 @@ fn update_state<R: Runtime>(rt: &mut R, state: &State) -> Result<(), RuntimeErro
         .tiles
         .iter()
         .map(|tile_type| match tile_type {
-            TileType::Floor => 0x01,
-            TileType::Wall => 0x02,
+            TileType::Floor(Some(Sword)) => 0x01,
+            TileType::Floor(Some(Potion)) => 0x02,
+            TileType::Floor(None) => 0x03,
+            TileType::Wall => 0x04,
         })
         .collect();
 
@@ -248,39 +213,19 @@ fn update_state<R: Runtime>(rt: &mut R, state: &State) -> Result<(), RuntimeErro
     let y_pos = usize::to_be_bytes(state.player_position.y_pos);
     let () = rt.store_write(&Y_POS_PATH, &y_pos, 0)?;
 
-    // inventory
     let inventory: Vec<u8> = state
         .player_position
         .inventory
         .iter()
-        .map(|inventory| match inventory {
-            Item {
-                x_pos_item: _,
-                y_pos_item: _,
-            } => 0x06,
+        .map(|item| match item {
+            Item::Sword => 0x05,
+            Item::Potion => 0x06,
         })
         .collect();
 
     let () = rt.store_write(&INVENTORY_PATH, &inventory, 0)?;
 
     // item
-
-    match &state.item_position {
-        None => {
-            let () = rt.store_delete(&X_POS_ITEM_PATH)?;
-            let () = rt.store_delete(&Y_POS_ITEM_PATH)?;
-        }
-        Some(item_position) => {
-            let x_pos_item_bytes = usize::to_be_bytes(item_position.x_pos_item).to_vec();
-            // to_state = 0x00, item position encoded in 4 bytes
-            let () = rt.store_write(&X_POS_ITEM_PATH, &x_pos_item_bytes, 0)?;
-
-            // save for y position, we need to have to_save define again
-            let y_pos_item_bytes = usize::to_be_bytes(item_position.y_pos_item).to_vec();
-            // 0x00, item position encoded in 4 bytes
-            let () = rt.store_write(&Y_POS_ITEM_PATH, &y_pos_item_bytes, 0)?;
-        }
-    }
     Ok(())
 }
 
