@@ -83,3 +83,14 @@ button {
   margin: 2px;
   width: 7ch;
 }
+
+.item {
+  display: flex;
+  align-items: center;
+}
+
+.item-name {
+  margin-left: 12px;
+  margin-top: 4px;
+  font-size: 1rem;
+}

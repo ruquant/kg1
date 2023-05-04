@@ -37,19 +37,27 @@ const App = () => {
   // handlekey
   const onKeyDown = (e) => {
     // 37 = left, 38 = up, 39 = right, 40 = down
-    if (e.key === 38) {
-      move("01");
-    } else if (e.key === 40) {
-      move("02");
-    } else if (e.key === 37) {
-      move("03");
-    } else if (e.key === 39) {
-      move("04");
+    // console.log("hello world");
+    // console.log(e.key);
+    // console.log(e.keyCode);
+    if (e.keyCode === 38) {
+      move("01")();
+    } else if (e.keyCode === 40) {
+      move("02")();
+    } else if (e.keyCode === 37) {
+      move("03")();
+    } else if (e.keyCode === 39) {
+      move("04")();
+    }
+    // todo key for pickup y
+    else if (e.keyCode === 89) {
+      move("05")();
     }
   };
 
   // 32 * 32
-  const [player, updatePlayer] = useState({ x: 0, y: 0 });
+  // Add the inventory of the player
+  const [player, updatePlayer] = useState({ x: 0, y: 0, inventory: [] });
 
   // place item on map, tiles are: 01, 02, 03, 04 is a binary update_state
   // correspond with the one define in rust
@@ -78,9 +86,19 @@ const App = () => {
       const y_pos_bytes = await res2.text();
       const y_pos = Number.parseInt(y_pos_bytes, 16);
 
+      // fetching the inventory of the player
+      const res4 = await fetch(
+        "http://127.0.0.1:8080/state/value?path=/state/player/inventory"
+      );
+      // inventory is a string of 2 bytes: 2 splots
+      const inventory_bytes = await res4.text();
+      // split the inventory to string
+      const inventory = splitNChars(inventory_bytes);
+
       updatePlayer({
         x: x_pos,
         y: y_pos,
+        inventory,
       });
 
       // Map -> Item
@@ -103,7 +121,7 @@ const App = () => {
 
   // App interface
   return (
-    <div className="App">
+    <div className="App" onKeyDown={onKeyDown} tabIndex="0">
       <header className="App-header">
         <div className="title">Dungeon sequencer</div>
         <div id="map">
@@ -127,7 +145,6 @@ const App = () => {
                             key={`${map_x},${map_x}`}
                             className="cell player"
                             tabIndex={0}
-                            onKeyDown
                           ></div>
                         );
                       }
@@ -196,6 +213,44 @@ const App = () => {
           </div>
           <button onClick={moveRight}>right</button>
           <button onClick={pickUp}>pick up</button>
+        </div>
+
+        {
+          // Add inventory display as a button
+        }
+        <div>
+          <div>Inventory:</div>
+          {player.inventory.map((item, i) => {
+            // matching the items as before for display
+            switch (item) {
+              case "01":
+                return (
+                  <div className="item">
+                    <div
+                      // i : index is unit of the inventory
+                      key={i}
+                      className="cell sword"
+                      tabIndex={0}
+                    />
+                    <div className="item-name">Sword</div>
+                  </div>
+                );
+              case "02":
+                return (
+                  <div className="item">
+                    <div
+                      // i : index is unit of the inventory
+                      key={i}
+                      className="cell potion"
+                      tabIndex={0}
+                    />
+                    <div className="item-name">Potion</div>
+                  </div>
+                );
+              default:
+                return null;
+            }
+          })}
         </div>
       </header>
     </div>
