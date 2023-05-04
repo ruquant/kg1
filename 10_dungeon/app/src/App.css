@@ -48,8 +48,16 @@
   background-color: green;
 }
 
-.item {
+.sword {
   background-color: purple;
+}
+
+.potion {
+  background-color: blue;
+}
+
+.wall {
+  background-color: black;
 }
 
 .line {

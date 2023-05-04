@@ -21,6 +21,18 @@ const moveLeft = move("03");
 const moveRight = move("04");
 const pickUp = move("05");
 
+/**
+ * Split a string into n slices
+ */
+const splitNChars = (txt) => {
+  let result = [];
+  for (let i = 0; i < txt.length; i += 2) {
+    // 2 is the length of the bytes
+    result.push(txt.substr(i, 2));
+  }
+  return result;
+};
+
 const App = () => {
   // handlekey
   const onKeyDown = (e) => {
@@ -39,10 +51,13 @@ const App = () => {
   // 32 * 32
   const [player, updatePlayer] = useState({ x: 0, y: 0 });
 
-  // TODO
-  // place default item at null
-  // place item on map
-  const [map, updateMap] = useState({ tiles: [] });
+  // place item on map, tiles are: 01, 02, 03, 04 is a binary update_state
+  // correspond with the one define in rust
+  // 0x01 => Some(TileType::Floor(Some(Sword))),
+  // 0x02 => Some(TileType::Floor(Some(Potion))),
+  // 0x03 => Some(TileType::Floor(None)),
+  // 0x04 => Some(TileType::Wall),
+  const [map, updateMap] = useState({ tiles: ["01", "02", "03", "04"] });
 
   useEffect(() => {
     // starting an interval
@@ -68,16 +83,17 @@ const App = () => {
         y: y_pos,
       });
 
-      // TODO
       // Map -> Item
       const res3 = await fetch(
         "http://127.0.0.1:8080/state/value?path=/state/map"
       );
 
       const map_bytes = await res3.text();
-      const map = Number.parseInt(map_bytes, 16);
+      // spliting the array to a list of string
+      const map = splitNChars(map_bytes);
 
-      updateMap({ tiles: map });
+      // we can put new value to the map
+      updateMap(map);
     }, 500); // The interval duration is 500ms
     return () => {
       // When the component umount, or refreshed we remove the interval
@@ -101,8 +117,11 @@ const App = () => {
                     .fill(0)
                     // draw the map horizontal
                     .map((_, map_x) => {
-                      // place player on cell
-                      if (map_x === player.x && map_y === player.y) {
+                      // define map_idx as in the kernel
+                      let idx = map_y * 32 + map_x;
+
+                      // place the player position on the map
+                      if (map_y === player.y && map_x === player.x) {
                         return (
                           <div
                             key={`${map_x},${map_x}`}
@@ -112,21 +131,55 @@ const App = () => {
                           ></div>
                         );
                       }
-                      // TODO: place item on cell
-                      if (map_x === item.x_item && map_y === item.y_item) {
-                        return (
-                          <div
-                            key={`${map_x},${map_x}`}
-                            className="cell item"
-                          ></div>
-                        );
-                      }
 
-                      // the rest are normal cell
-                      else {
-                        return (
-                          <div key={`${map_x},${map_x}`} className="cell"></div>
-                        );
+                      // define the tile is the map_idx
+                      let tile = map[idx];
+                      // matching the tile
+                      switch (tile) {
+                        // checking each case for the items on the map
+                        case "01":
+                          return (
+                            <div
+                              key={`${map_x},${map_x}`}
+                              className="cell sword"
+                              tabIndex={0}
+                            ></div>
+                          );
+                        // potion
+                        case "02":
+                          return (
+                            <div
+                              key={`${map_x},${map_x}`}
+                              className="cell potion"
+                              tabIndex={0}
+                            ></div>
+                          );
+                        case "03":
+                          return (
+                            <div
+                              key={`${map_x},${map_x}`}
+                              className="cell"
+                              tabIndex={0}
+                            ></div>
+                          );
+                        case "04":
+                          return (
+                            <div
+                              key={`${map_x},${map_x}`}
+                              className="cell wall"
+                              tabIndex={0}
+                            ></div>
+                          );
+
+                        // if other cases return the white cell for floor
+                        default:
+                          return (
+                            <div
+                              key={`${map_x},${map_x}`}
+                              className="cell"
+                              tabIndex={0}
+                            ></div>
+                          );
                       }
                     })}
                 </div>

@@ -45,24 +45,18 @@ impl State {
         let x_pos = self.player_position.x_pos;
         let y_pos = self.player_position.y_pos;
 
-        let idx = &self.map.tiles[map_idx(x_pos, y_pos)];
+        let tile = self.map.get_tile(x_pos, y_pos);
 
-        match idx {
-            Floor(Some(Potion)) => {
-                let player_position = self.player_position.add_item(Potion);
+        match tile {
+            Some(Floor(Some(item))) => {
+                let player_position = self.player_position.add_item(item);
+                let map = self.map.remove_item(x_pos, y_pos);
                 State {
                     player_position,
-                    ..self
+                    map,
                 }
             }
-            Floor(Some(Sword)) => {
-                let player_position = self.player_position.add_item(Sword);
-                State {
-                    player_position,
-                    ..self
-                }
-            }
-            Floor(None) => self,
+            Some(Floor(None)) => self,
             _ => self,
         }
     }
@@ -163,8 +157,8 @@ fn load_state<R: Runtime>(rt: &mut R) -> Result<State, RuntimeError> {
             let inventory: Vec<Item> = inventory_bytes
                 .iter()
                 .filter_map(|bytes| match bytes {
-                    0x05 => Some(Item::Sword),
-                    0x06 => Some(Item::Potion),
+                    0x01 => Some(Item::Sword),
+                    0x02 => Some(Item::Potion),
                     _ => None,
                 })
                 .collect();
@@ -218,13 +212,12 @@ fn update_state<R: Runtime>(rt: &mut R, state: &State) -> Result<(), RuntimeErro
         .inventory
         .iter()
         .map(|item| match item {
-            Item::Sword => 0x05,
-            Item::Potion => 0x06,
+            Item::Sword => 0x01,
+            Item::Potion => 0x02,
         })
         .collect();
 
     let () = rt.store_write(&INVENTORY_PATH, &inventory, 0)?;
-
     // item
     Ok(())
 }

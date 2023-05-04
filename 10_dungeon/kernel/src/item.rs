@@ -5,10 +5,11 @@ pub enum Item {
 }
 
 impl Item {
-    #[allow(path_statements)]
-    #[allow(dead_code)]
-    pub fn new(sword: Item, potion: Item) -> Self {
-        sword;
-        potion
+    pub fn new_sword() -> Self {
+        Self::Sword
+    }
+
+    pub fn new_potion() -> Self {
+        Self::Potion
     }
 }

@@ -22,13 +22,19 @@ pub fn map_idx(x: usize, y: usize) -> usize {
 
 impl Map {
     pub fn new() -> Self {
-        Self {
-            tiles: vec![
-                // add sword in the beginning on the floor
-                TileType::Floor(std::option::Option::Some(Sword));
-                MAP_WIDTH * MAP_HEIGHT
-            ],
-        }
+        let mut map = vec![
+            // add sword in the beginning on the floor
+            TileType::Floor(None);
+            MAP_WIDTH * MAP_HEIGHT
+        ];
+
+        // place wall at the 0
+        map[0] = TileType::Wall;
+        // place the sword on the 48 on the map
+        map[48] = TileType::Floor(Some(Item::Sword));
+        map[970] = TileType::Floor(Some(Item::Potion));
+
+        Self { tiles: map }
     }
 
     #[allow(dead_code)]
@@ -51,15 +57,30 @@ impl Map {
         }
     }
 
-    // player cannot walk off the edge of the map
-    pub fn in_bounds(&self, x: usize, y: usize) -> bool {
-        x < MAP_WIDTH && y < MAP_HEIGHT
+    pub fn get_tile(&self, x: usize, y: usize) -> Option<TileType> {
+        // cloned: inner value of an option and not an option itself
+        self.tiles.get(map_idx(x, y)).cloned()
     }
 
-    // player can walk on floor but not through walls, and place the player
-    // on the non item index
+    // player can walk on floor but not through walls
     pub fn can_enter_tile(&self, x: usize, y: usize) -> bool {
-        self.in_bounds(x, y)
-            && self.tiles[map_idx(x, y)] == TileType::Floor(std::option::Option::None)
+        // using [get] to avoid of [out_of_bound] in the [map_idx] function
+        match self.get_tile(x, y) {
+            Some(TileType::Wall) => false,
+            Some(TileType::Floor(_)) => true,
+            None => false,
+        }
+    }
+
+    // remove item from the map
+    pub fn remove_item(self, x_pos: usize, y_pos: usize) -> Self {
+        match self.get_tile(x_pos, y_pos) {
+            Some(TileType::Floor(Some(_))) => {
+                let mut tiles = self.tiles;
+                tiles[map_idx(x_pos, y_pos)] = TileType::Floor(None);
+                Self { tiles }
+            }
+            _ => self,
+        }
     }
 }
