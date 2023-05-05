@@ -20,6 +20,9 @@ const moveDown = move("02");
 const moveLeft = move("03");
 const moveRight = move("04");
 const pickUp = move("05");
+// drop needs to know the position of the item in the inventory
+// to be able to drop them
+const drop = (itemPosition) => move(`060${itemPosition}`);
 
 /**
  * Split a string into n slices
@@ -34,13 +37,14 @@ const splitNChars = (txt) => {
 };
 
 const App = () => {
-  // handlekey
+  // handle keyboards
   const onKeyDown = (e) => {
     // 37 = left, 38 = up, 39 = right, 40 = down
     // console.log("hello world");
     // console.log(e.key);
     // console.log(e.keyCode);
     if (e.keyCode === 38) {
+      // need to return an () after calling the function
       move("01")();
     } else if (e.keyCode === 40) {
       move("02")();
@@ -49,16 +53,18 @@ const App = () => {
     } else if (e.keyCode === 39) {
       move("04")();
     }
-    // todo key for pickup y
+    // y = 89 for pickup
     else if (e.keyCode === 89) {
       move("05")();
     }
   };
 
   // 32 * 32
+  // Define a player with player position and
   // Add the inventory of the player
   const [player, updatePlayer] = useState({ x: 0, y: 0, inventory: [] });
 
+  // Define a map
   // place item on map, tiles are: 01, 02, 03, 04 is a binary update_state
   // correspond with the one define in rust
   // 0x01 => Some(TileType::Floor(Some(Sword))),
@@ -107,7 +113,7 @@ const App = () => {
       );
 
       const map_bytes = await res3.text();
-      // spliting the array to a list of string
+      // need to split the array to a list of string
       const map = splitNChars(map_bytes);
 
       // we can put new value to the map
@@ -119,7 +125,7 @@ const App = () => {
     };
   }, []);
 
-  // App interface
+  // App interface, adding the keyboard handle at App
   return (
     <div className="App" onKeyDown={onKeyDown} tabIndex="0">
       <header className="App-header">
@@ -149,9 +155,10 @@ const App = () => {
                         );
                       }
 
+                      // Place items on floor
                       // define the tile is the map_idx
                       let tile = map[idx];
-                      // matching the tile
+                      // matching the tile and print out the items
                       switch (tile) {
                         // checking each case for the items on the map
                         case "01":
@@ -171,6 +178,7 @@ const App = () => {
                               tabIndex={0}
                             ></div>
                           );
+                        // if it is none then it is just a normal cell
                         case "03":
                           return (
                             <div
@@ -204,6 +212,9 @@ const App = () => {
             })}
         </div>
 
+        {
+          // Add buttons for player actions
+        }
         <div className="buttons">
           <button onClick={moveLeft}>left</button>
 
@@ -216,7 +227,7 @@ const App = () => {
         </div>
 
         {
-          // Add inventory display as a button
+          // Display inventory belows the buttons
         }
         <div>
           <div>Inventory:</div>
@@ -226,13 +237,24 @@ const App = () => {
               case "01":
                 return (
                   <div className="item">
+                    {
+                      // print the item cell
+                    }
                     <div
                       // i : index is unit of the inventory
                       key={i}
                       className="cell sword"
                       tabIndex={0}
                     />
+                    {
+                      // Print the name of item kind on the right of item cell
+                    }
                     <div className="item-name">Sword</div>
+                    {
+                      // Add the button next ot the item to drop them, only with the
+                      // click
+                    }
+                    <button onClick={drop(i)}>drop</button>
                   </div>
                 );
               case "02":
@@ -245,6 +267,7 @@ const App = () => {
                       tabIndex={0}
                     />
                     <div className="item-name">Potion</div>
+                    <button onClick={drop(i)}>drop</button>
                   </div>
                 );
               default:

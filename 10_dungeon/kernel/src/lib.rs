@@ -2,7 +2,7 @@ mod map;
 mod player;
 
 use crate::TileType::Floor;
-use map::{map_idx, Map, TileType, MAP_HEIGHT, MAP_WIDTH};
+use map::{Map, TileType, MAP_HEIGHT, MAP_WIDTH};
 use player::{Player, MAX_ITEMS};
 mod item;
 use crate::{item::Item, Item::Potion, Item::Sword};
@@ -31,6 +31,8 @@ pub enum PlayerAction {
     MoveUp,
     MoveDown,
     PickUp,
+    // item can be chosen to drop from the inventory (nth)
+    Drop(usize),
 }
 
 impl State {
@@ -49,7 +51,9 @@ impl State {
 
         match tile {
             Some(Floor(Some(item))) => {
+                // player pickup the item and add to inventory
                 let player_position = self.player_position.add_item(item);
+                // after pickup, remove item from the map
                 let map = self.map.remove_item(x_pos, y_pos);
                 State {
                     player_position,
@@ -57,6 +61,38 @@ impl State {
                 }
             }
             Some(Floor(None)) => self,
+            _ => self,
+        }
+    }
+
+    // Drop item from the inventory
+    pub fn drop_item(self, item_position: usize) -> State {
+        let x_pos = self.player_position.x_pos;
+        let y_pos = self.player_position.y_pos;
+
+        // check there is item in inventory or not
+        let tile = self.map.get_tile(x_pos, y_pos);
+        match tile {
+            // we can only drop when there is nothing on the floor
+            Some(TileType::Floor(None)) => {
+                // remove_item of the player
+                let (player_position, item) = self.player_position.remove_item(item_position);
+                // get item in the inventory
+                match item {
+                    Some(item) => {
+                        let map = self.map.add_item(x_pos, y_pos, item);
+                        State {
+                            player_position,
+                            map,
+                        }
+                    }
+                    None => State {
+                        // the player position need to be update
+                        player_position,
+                        ..self
+                    },
+                }
+            }
             _ => self,
         }
     }
@@ -91,6 +127,7 @@ impl State {
                 self.update_player(player.move_down())
             }
             PlayerAction::PickUp => self.pick_up(),
+            PlayerAction::Drop(item_position) => self.drop_item(item_position),
         }
     }
 }
@@ -218,7 +255,7 @@ fn update_state<R: Runtime>(rt: &mut R, state: &State) -> Result<(), RuntimeErro
         .collect();
 
     let () = rt.store_write(&INVENTORY_PATH, &inventory, 0)?;
-    // item
+
     Ok(())
 }
 
@@ -252,6 +289,10 @@ pub fn entry<R: Runtime>(rt: &mut R) {
                             [0x01, 0x04] => Some(PlayerAction::MoveRight),
                             // pickup
                             [0x01, 0x05] => Some(PlayerAction::PickUp),
+                            // drop item, this action takes 3 bytes: 0x00 is the first place
+                            // 0x01 is the 2nd position in the inventory
+                            [0x01, 0x06, 0x00] => Some(PlayerAction::Drop(0)),
+                            [0x01, 0x06, 0x01] => Some(PlayerAction::Drop(1)),
                             _ => None,
                         };
 

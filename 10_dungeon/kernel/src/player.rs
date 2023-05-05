@@ -68,4 +68,21 @@ impl Player {
             self
         }
     }
+
+    // remove item from the inventory of the player
+    pub fn remove_item(self, item_position: usize) -> (Player, Option<Item>) {
+        let inventory_len = self.inventory.len();
+
+        // check that item is not more than what store inside the inventory
+        if item_position < inventory_len {
+            let item = self.inventory.get(item_position).cloned();
+            let mut inventory = self.inventory;
+
+            inventory.remove(item_position);
+
+            (Player { inventory, ..self }, item)
+        } else {
+            (self, None)
+        }
+    }
 }
