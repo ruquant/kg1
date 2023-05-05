@@ -55,13 +55,14 @@ impl TryFrom<Vec<u8>> for PlayerMsg {
                     [48, 52] => Ok(PlayerAction::MoveRight),
                     // pickup
                     [48, 53] => Ok(PlayerAction::PickUp),
+                    // drop with 3 bytes
+                    [48, 54, 48, 48] => Ok(PlayerAction::Drop(0)),
+                    [48, 54, 48, 49] => Ok(PlayerAction::Drop(1)),
                     _ => Err(()),
                 }?;
-                println!("it's not an action");
 
                 // public key is bytes we need to convert it to string
                 let public_key: &str = &String::from_utf8(public_key.to_vec()).map_err(|_| ())?;
-                println!("it's not a string");
                 // we have the string and in rust we have to convert it again in a string
                 let public_key: String = public_key.to_string();
 

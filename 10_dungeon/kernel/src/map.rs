@@ -1,6 +1,6 @@
 use std::vec;
 
-use crate::{item::Item, Item::Potion, Item::Sword};
+use crate::item::Item;
 
 pub const MAP_WIDTH: usize = 32;
 pub const MAP_HEIGHT: usize = 32;
@@ -41,7 +41,7 @@ impl Map {
 
     #[allow(dead_code)]
     pub fn get_sword(self) -> Item {
-        let sword = TileType::Floor(std::option::Option::Some(Sword));
+        let sword = TileType::Floor(std::option::Option::Some(Item::Sword));
         match sword {
             TileType::Floor(Some(sword)) => sword,
             TileType::Floor(None) => todo!(),
@@ -51,7 +51,7 @@ impl Map {
 
     #[allow(dead_code)]
     pub fn get_potion() -> Item {
-        let potion = TileType::Floor(std::option::Option::Some(Potion));
+        let potion = TileType::Floor(std::option::Option::Some(Item::Potion));
         match potion {
             TileType::Floor(Some(potion)) => potion,
             TileType::Floor(None) => todo!(),
