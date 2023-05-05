@@ -2,6 +2,14 @@ import logo from "./logo.svg";
 import "./App.css";
 import { useEffect, useState } from "react";
 
+// Generate these secret keys by using the: octez-client gens key alice/bob
+// these keys are uncrypted secret keys
+const BOB_SECRET = "edsk31vznjHSSpGExDMHYASz45VZqXN4DPxvsa4hAyY8dHM28cZzp6";
+const ALICE_SECRET = "edsk4QLrcijEffxV31gGdN2HU7UpyJjA8drFoNcmnB28n89YjPNRFm";
+
+// for now using the fix player addres
+const PLAYER_ADDRESS = "tz1cBUPLRLzM77p5iQKTUxfDUp3vwPp9BKfQ";
+
 const move = (data) => async () => {
   const action = { data: data };
   const headers = new Headers();
@@ -79,7 +87,7 @@ const App = () => {
       // Player
       // Fetching the player x position, res1 is the http answer
       const res1 = await fetch(
-        "http://127.0.0.1:8080/state/value?path=/state/player/x_pos"
+        `http://127.0.0.1:8080/state/value?path=/players/${PLAYER_ADDRESS}/x_pos`
       );
       // Getting the response as text
       const x_pos_bytes = await res1.text();
@@ -87,14 +95,14 @@ const App = () => {
       const x_pos = Number.parseInt(x_pos_bytes, 16);
 
       const res2 = await fetch(
-        "http://127.0.0.1:8080/state/value?path=/state/player/y_pos"
+        `http://127.0.0.1:8080/state/value?path=/players/${PLAYER_ADDRESS}/y_pos`
       );
       const y_pos_bytes = await res2.text();
       const y_pos = Number.parseInt(y_pos_bytes, 16);
 
       // fetching the inventory of the player
       const res4 = await fetch(
-        "http://127.0.0.1:8080/state/value?path=/state/player/inventory"
+        `http://127.0.0.1:8080/state/value?path=/players/${PLAYER_ADDRESS}/inventory`
       );
       // inventory is a string of 2 bytes: 2 splots
       const inventory_bytes = await res4.text();
