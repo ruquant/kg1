@@ -1,18 +1,15 @@
 import logo from "./logo.svg";
 import "./App.css";
 import { useEffect, useState } from "react";
+import { InMemorySigner } from "@taquito/signer";
 
 // Generate these secret keys by using the: octez-client gens key alice/bob
 // these keys are uncrypted secret keys
 const BOB_SECRET = "edsk31vznjHSSpGExDMHYASz45VZqXN4DPxvsa4hAyY8dHM28cZzp6";
 const ALICE_SECRET = "edsk4QLrcijEffxV31gGdN2HU7UpyJjA8drFoNcmnB28n89YjPNRFm";
 
-// for now using the fix player addres
-const PLAYER_ADDRESS = "tz1cBUPLRLzM77p5iQKTUxfDUp3vwPp9BKfQ";
-
 const move = (data, signer) => async () => {
-  // const address = await signer.publicKeyHash();
-  const address = PLAYER_ADDRESS;
+  const address = await signer.publicKeyHash();
 
   // The data send to rollup is 01->0... We add the public key to the
   // data and connect it with the `-`, later we can retrieve the {data}
@@ -33,16 +30,6 @@ const move = (data, signer) => async () => {
   });
 };
 
-// Player actions
-const moveUp = move("01");
-const moveDown = move("02");
-const moveLeft = move("03");
-const moveRight = move("04");
-const pickUp = move("05");
-// drop needs to know the position of the item in the inventory
-// to be able to drop them
-const drop = (itemPosition) => move(`060${itemPosition}`);
-
 /**
  * Split a string into n slices
  */
@@ -56,6 +43,29 @@ const splitNChars = (txt) => {
 };
 
 const App = () => {
+  // signer
+  const [signer, setSigner] = useState(undefined);
+
+  const setSecret = (secret) => {
+    InMemorySigner.fromSecretKey(secret).then(setSigner);
+  };
+
+  // At the start we use bob
+  useEffect(() => {
+    setSecret(BOB_SECRET);
+  }, []);
+
+  // Player actions
+  const moveUp = move("01", signer);
+
+  const moveDown = move("02", signer);
+  const moveLeft = move("03", signer);
+  const moveRight = move("04", signer);
+  const pickUp = move("05", signer);
+  // drop needs to know the position of the item in the inventory
+  // to be able to drop them
+  const drop = (itemPosition) => move(`060${itemPosition}`, signer);
+
   // handle keyboards
   const onKeyDown = (e) => {
     // 37 = left, 38 = up, 39 = right, 40 = down
@@ -64,17 +74,17 @@ const App = () => {
     // console.log(e.keyCode);
     if (e.keyCode === 38) {
       // need to return an () after calling the function
-      move("01")();
+      move("01", signer)();
     } else if (e.keyCode === 40) {
-      move("02")();
+      move("02", signer)();
     } else if (e.keyCode === 37) {
-      move("03")();
+      move("03", signer)();
     } else if (e.keyCode === 39) {
-      move("04")();
+      move("04", signer)();
     }
     // y = 89 for pickup
     else if (e.keyCode === 89) {
-      move("05")();
+      move("05", signer)();
     }
   };
 
@@ -93,12 +103,18 @@ const App = () => {
   const [map, updateMap] = useState({ tiles: ["01", "02", "03", "04"] });
 
   useEffect(() => {
+    if (!signer) {
+      return () => {};
+    }
+
     // starting an interval
     const interval = setInterval(async () => {
+      const player_address = await signer.publicKeyHash();
+
       // Player
       // Fetching the player x position, res1 is the http answer
       const res1 = await fetch(
-        `http://127.0.0.1:8080/state/value?path=/players/${PLAYER_ADDRESS}/x_pos`
+        `http://127.0.0.1:8080/state/value?path=/players/${player_address}/x_pos`
       );
       // Getting the response as text
       const x_pos_bytes = await res1.text();
@@ -106,14 +122,14 @@ const App = () => {
       const x_pos = Number.parseInt(x_pos_bytes, 16);
 
       const res2 = await fetch(
-        `http://127.0.0.1:8080/state/value?path=/players/${PLAYER_ADDRESS}/y_pos`
+        `http://127.0.0.1:8080/state/value?path=/players/${player_address}/y_pos`
       );
       const y_pos_bytes = await res2.text();
       const y_pos = Number.parseInt(y_pos_bytes, 16);
 
       // fetching the inventory of the player
       const res4 = await fetch(
-        `http://127.0.0.1:8080/state/value?path=/players/${PLAYER_ADDRESS}/inventory`
+        `http://127.0.0.1:8080/state/value?path=/players/${player_address}/inventory`
       );
       // inventory is a string of 2 bytes: 2 splots
       const inventory_bytes = await res4.text();
@@ -140,9 +156,9 @@ const App = () => {
     }, 500); // The interval duration is 500ms
     return () => {
       // When the component umount, or refreshed we remove the interval
-      setInterval(interval);
+      clearInterval(interval);
     };
-  }, []);
+  }, [signer]);
 
   // App interface, adding the keyboard handle at App
   return (
@@ -245,6 +261,11 @@ const App = () => {
           <button onClick={pickUp}>pick up</button>
         </div>
 
+        {
+          // Add buttons to switch between players
+        }
+        <button onClick={() => setSecret(ALICE_SECRET)}>ALICE</button>
+        <button onClick={() => setSecret(BOB_SECRET)}>BOB</button>
         {
           // Display inventory belows the buttons
         }
