@@ -1,5 +1,14 @@
 # Todo
 
+# next pair
+
+- display two players onto the map
+  - fetch the /players subkey => ["tz1..bob", "tz2...alice"]
+  - fetch /players/tz1...bob/x_pos etc...
+- preparing the demo to have the game running into two different computers
+- marketplace + withdraw on L1
+- proxy
+
 ## Next potential features
 
 1. Bind buttons (or function) to the arrow keys of the keyboard (React App) (done)
@@ -37,3 +46,44 @@ Simplify version in kernel (not production ready but nice for demo with multipla
 BIG-STEP: Difficult but very nice to achive this
 
 Random for rollup, chasing monster.
+
+## Proxy
+
+It's not convenient to parse bytes from the browser. So instead we can ask to a proxy server to deserialize the data for us. It will convert bytes into json.
+
+Then it means the proxy server has to know the binary encoding of the durable storage, that's why the proxy should be written in Rust.
+
+Fortunately the sequencer can also act as a proxy server as explained in the following picture:
+
+![](./proxy.png)
+
+In term of code, it means to define one http endpoint by "component", like so:
+
+```rust
+async fn get_player<N: Node>(node: web::Data<N>) -> impl Responder {
+    //let x_pos = node.as_ref().get_value("/players/tz1..../x_pos").await;
+    //let y_pos = node.as_ref().get_value("/players/tz1..../y_pos").await;
+    //let inventory = node.as_ref().get_value("/players/tz1..../inventory").await;
+    let res: Option<Vec<u8>> = Some(vec![]);
+    match res {
+        Some(bytes) => {
+             // Parsing all the fields from bytes to rust type
+
+             // create the player
+            let player = Player {
+               x_pos,
+               y_pos,
+               inventory
+            }
+
+            // Serialize it to json
+            let json = serde_json::to_string(&player).unwrap();
+            // return the json
+            json
+        }
+        None => "not ok".to_string(),
+    }
+}
+```
+
+The first would be to copy paste the sequencer-http to the dungeon folder.
