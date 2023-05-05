@@ -66,9 +66,12 @@ impl SledDatabase {
             Some(node) => {
                 let subkey = subkey.to_string();
                 if !node.children().contains(&subkey) {
-                    node.children().push(subkey);
+                    let mut children = node.children;
+                    children.push(subkey);
+                    TreeNode { children, ..node }
+                } else {
+                    node
                 }
-                node
             }
         };
         let _ = self.write_node(&node)?;
@@ -78,9 +81,13 @@ impl SledDatabase {
 
 impl Database for SledDatabase {
     fn write<'a>(&self, path: &str, data: &'a [u8]) -> Result<&'a [u8], DatabaseError> {
+        println!("write node {}", path);
         let subkeys = SledDatabase::get_all_subkeys(path);
+        println!("{:?}", &subkeys);
+
         // Creates/Update node's subkeys
         for (path, subkey) in subkeys {
+            println!("add subkey {} to path {}", subkey, path);
             self.add_subkey(&path, &subkey)?;
         }
 
@@ -106,7 +113,10 @@ impl Database for SledDatabase {
         let node = self.read_node(path)?;
         match node {
             None => Ok(Vec::default()),
-            Some(TreeNode { children, .. }) => Ok(children),
+            Some(TreeNode { children, .. }) => {
+                println!("children of the node {}: {:?}", path, children);
+                Ok(children)
+            }
         }
     }
 
