@@ -371,7 +371,7 @@ pub fn set_collected_block<R: Runtime>(
     previous_block: &u32,
 ) -> Result<()> {
     let tweet_collected_block_path = tweet_collected_block_path(tweet_id)?;
-    let _ = store_u32(host, &tweet_collected_block_path, &previous_block)?;
+    let _ = store_u32(host, &tweet_collected_block_path, previous_block)?;
     Ok(())
 }
 
