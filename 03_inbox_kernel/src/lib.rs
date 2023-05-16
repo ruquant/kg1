@@ -39,7 +39,7 @@ fn read_inbox_message<Expr: Michelson>(host: &mut impl Runtime) {
                 match InboxMessage::<Expr>::parse(message.as_ref()) {
                     Ok(parsed_msg) => match parsed_msg {
                         (remaining, InboxMessage::Internal(msg)) => {
-                            assert!(remaining.is_empty());
+                            debug_assert!(remaining.is_empty());
                             match msg {
                                 InternalInboxMessage::StartOfLevel => {
                                     // The "Start of level" message is pushed by the Layer 1
@@ -78,7 +78,7 @@ fn read_inbox_message<Expr: Michelson>(host: &mut impl Runtime) {
                             // For a simple practical example, see `counter-kernel`, where
                             // external messages are used to encode the state transitions
                             // of a counter.
-                            assert!(remaining.is_empty());
+                            debug_assert!(remaining.is_empty());
                             let message = String::from_utf8_lossy(msg);
                             debug_msg!(host, "External message: \"{}\"\n", message);
                         }

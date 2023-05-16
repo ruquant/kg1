@@ -29,7 +29,7 @@ fn read_inbox_message<Expr: Michelson>(host: &mut impl Runtime) {
                     Ok((remaining, InboxMessage::External([MAGIC_BYTE, data @ ..]))) => {
                         // Only process external messages that begin with the magic byte
                         // that we have defined for this rollup.
-                        assert!(remaining.is_empty());
+                        debug_assert!(remaining.is_empty());
                         let message = String::from_utf8_lossy(data);
                         debug_msg!(host, "External message: \"{}\"\n", message);
                     }

@@ -20,7 +20,7 @@ fn read_inbox_message<Expr: Michelson>(host: &mut impl Runtime, own_address: &Sm
                 // Parse the payload of the message
                 let parsed_message = InboxMessage::<Expr>::parse(message.as_ref());
                 if let Ok((remaining, InboxMessage::Internal(msg))) = parsed_message {
-                    assert!(remaining.is_empty());
+                    debug_assert!(remaining.is_empty());
                     if let InternalInboxMessage::Transfer(m) = msg {
                         if m.destination.hash() == own_address {
                             // If the message is addressed to me, push a message
