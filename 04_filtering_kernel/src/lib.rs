@@ -26,17 +26,17 @@ fn read_inbox_message<Expr: Michelson>(host: &mut impl Runtime) {
             Ok(Some(message)) => {
                 // Parse the payload of the message
                 match InboxMessage::<Expr>::parse(message.as_ref()) {
-                    Ok(parsed_msg) => match parsed_msg {
-                        (remaining, InboxMessage::External([MAGIC_BYTE, data @ ..])) => {
-                            // Only process external messages that begin with the magic byte
-                            // that we have defined for this rollup.
-                            assert!(remaining.is_empty());
-                            let message = String::from_utf8_lossy(data);
-                            debug_msg!(host, "External message: \"{}\"\n", message);
-                        }
+                    Ok((remaining, InboxMessage::External([MAGIC_BYTE, data @ ..]))) => {
+                        // Only process external messages that begin with the magic byte
+                        // that we have defined for this rollup.
+                        assert!(remaining.is_empty());
+                        let message = String::from_utf8_lossy(data);
+                        debug_msg!(host, "External message: \"{}\"\n", message);
+                    }
+                    Ok(_) => {
                         // Ignore any other message
-                        _ => (),
-                    },
+                        continue;
+                    }
                     Err(_) =>
                     // Error parsing the message. This could happen when parsing a message
                     // sent to a different rollup, which might have a different Michelson type.
@@ -59,7 +59,7 @@ fn read_inbox_message<Expr: Michelson>(host: &mut impl Runtime) {
     }
 }
 
-fn entry(host: &mut impl Runtime) {
+pub fn entry(host: &mut impl Runtime) {
     read_inbox_message::<MichelsonUnit>(host);
     host.mark_for_reboot().unwrap();
 }

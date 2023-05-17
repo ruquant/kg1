@@ -79,7 +79,7 @@ fn read_inbox_message<Expr: Michelson>(host: &mut impl Runtime) {
                             // external messages are used to encode the state transitions
                             // of a counter.
                             assert!(remaining.is_empty());
-                            let message = String::from_utf8_lossy(&msg);
+                            let message = String::from_utf8_lossy(msg);
                             debug_msg!(host, "External message: \"{}\"\n", message);
                         }
                     },
@@ -107,7 +107,7 @@ fn read_inbox_message<Expr: Michelson>(host: &mut impl Runtime) {
     }
 }
 
-fn entry(host: &mut impl Runtime) {
+pub fn entry(host: &mut impl Runtime) {
     // Every rollup has a Michelson type, declared at origination, which
     // represents the kind of data it can receive via internal transfer
     // messages. We won't delve into this here - for simplicity, the type

@@ -30,7 +30,7 @@ pub mod upgrade;
 const DEBUG_KERNEL_ROOT_HASH: &[u8; PREIMAGE_HASH_SIZE] =
     &hex!("00CBAF14DF8A6BB559040E5E7EE6853AD7B0DA69DC3C85BE22646F58D802498BDE");
 
-fn entry(host: &mut impl Runtime) {
+pub fn entry(host: &mut impl Runtime) {
     debug_msg!(
         host,
         "Hello from the upgrade kernel! I haven't upgraded yet.\n"
