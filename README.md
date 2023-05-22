@@ -2,6 +2,7 @@
 
 [[_TOC_]]
 
+The kernel gallery is a directory of examples to help you get started writing your own WASM kernels for [Tezos Smart Rollups](http://tezos.gitlab.io/alpha/smart_rollups.html).
 
 The kernel gallery is a direcory of examples to help you get started writing
 your own WASM kernels for [Tezos Smart Rollups](http://tezos.gitlab.io/alpha/smart_rollups.html).
