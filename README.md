@@ -115,14 +115,12 @@ Notice that, you need to make sure you have installed `wabt` with your system pa
 wasm-strip target/wasm32-unknown-unknown/release/<name>_kernel.wasm
 ```
 
-
 ## Tests
 
-Each kernel comes with tests and tests of the README, defined as [`cargo-make`](https://github.com/sagiegurari/cargo-make) tasks.
-You can install `cargo-make` like so:
+Each kernel comes with tests.
 
 ```shell
-cargo install cargo-make
+cargo test
 ```
 
 ## Octez Smart Rollup WASM Debugger
