@@ -98,10 +98,11 @@ export TZWITTER_L1_CONTRACT="KT1..."
 cargo build --release --target wasm32-unknown-unknown
 ```
 
-Alternatively, you can build using `cargo-make`:
+Alternatively, you can build one kernel at a time by going to the corresponding folder:
 
-```shell
-cargo make wasm
+```bash
+cd 00_debug_kernel
+cargo build --release --target wasm32-unknown-unknown
 ```
 
 ### Strip the generated WASM
