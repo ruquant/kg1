@@ -20,9 +20,7 @@ We recommend going through examples in order:
 - **06_counter_kernel**: a larger example combining the above elements into a simple counter application.
 - **09_tzwitter_app**: A full fledged rollup DApp for social media, combining an L1 smart contract, rollup kernel, React+Typescript frontend, and deployment script.
 
-Each kernel directory includes a README.md that demonstrates how to test the kernel
-with the `octez-smart-rollup-wasm-debugger` against a set of inputs and commands. The
-expected outputs are included in the README and checked in CI with [MDX](https://github.com/realworldocaml/mdx).
+Each kernel directory includes a README.md that demonstrates how to test the kernel with the `octez-smart-rollup-wasm-debugger` against a set of inputs and commands. The expected outputs are included in the README.
 
 ## Setup
 
