@@ -4,13 +4,10 @@
 
 The kernel gallery is a directory of examples to help you get started writing your own WASM kernels for [Tezos Smart Rollups](http://tezos.gitlab.io/alpha/smart_rollups.html).
 
-The kernel gallery is a direcory of examples to help you get started writing
-your own WASM kernels for [Tezos Smart Rollups](http://tezos.gitlab.io/alpha/smart_rollups.html).
-
-This repository is intended as companion to the docs on [developing your wasm kernel](http://tezos.gitlab.io/alpha/smart_rollups.html#developing-wasm-kernels). Additionally, it showcases
-simple end-to-end rollup applications, demonstrating how you can use rollups in your DApps.
+This repository is intended as companion to the docs on [developing your wasm kernel](http://tezos.gitlab.io/alpha/smart_rollups.html#developing-wasm-kernels). Additionally, it showcases simple end-to-end rollup applications, demonstrating how you can use rollups in your DApps.
 
 We recommend going through examples in order:
+
 - **00_debug_kernel**: shows how to debug messages and read from the shared inbox.
 - **01_storage_kernel**: shows how to read and write to the kernel's persistent storage.
 - **02_reboot_kernel**: shows how to mark a kernel reboot and discusses kernel control flow.
@@ -125,13 +122,12 @@ cargo test
 
 ## Octez Smart Rollup WASM Debugger
 
-The Octez software system includes an interactive debugger for Smart Rollup kernels, documented [here](https://tezos.gitlab.io/alpha/smart_rollups.html#testing-your-kernel). 
+The Octez software system includes an interactive debugger for Smart Rollup kernels, documented [here](https://tezos.gitlab.io/alpha/smart_rollups.html#testing-your-kernel).
 Each kernel's README includes examples how to use it.
 
 ## Deployment
 
-Refer to [the docs](https://tezos.gitlab.io/alpha/smart_rollups.html#deploying-a-rollup-node). Additionally, 
-you can look at an example deployment script in `./09_tzwitter_app/deploy.sh`.
+Refer to [the docs](https://tezos.gitlab.io/alpha/smart_rollups.html#deploying-a-rollup-node). Additionally, you can look at an example deployment script in `./09_tzwitter_app/deploy.sh`.
 
 ## Sequencer
 
