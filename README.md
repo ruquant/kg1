@@ -134,3 +134,7 @@ Each kernel's README includes examples how to use it.
 
 Refer to [the docs](https://tezos.gitlab.io/alpha/smart_rollups.html#deploying-a-rollup-node). Additionally, 
 you can look at an example deployment script in `./09_tzwitter_app/deploy.sh`.
+
+## Sequencer
+
+A first version of the sequencer has been developed in this repository. If you want to learn more, please take a look to the [readme](./09_rust_sequencer/readme.md).
