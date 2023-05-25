@@ -8,8 +8,6 @@ Let's upgrade this kernel to the debug kernel one.
 
 To run the kernel locally, compile the kernel to WASM with Cargo:
 
-<!-- $MDX skip -->
-
 ```sh
 $ cargo build --release --target wasm32-unknown-unknown
 ```
