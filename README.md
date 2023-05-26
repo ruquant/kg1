@@ -2,14 +2,12 @@
 
 [[_TOC_]]
 
+The kernel gallery is a directory of examples to help you get started writing your own WASM kernels for [Tezos Smart Rollups](http://tezos.gitlab.io/alpha/smart_rollups.html).
 
-The kernel gallery is a direcory of examples to help you get started writing
-your own WASM kernels for [Tezos Smart Rollups](http://tezos.gitlab.io/alpha/smart_rollups.html).
-
-This repository is intended as companion to the docs on [developing your wasm kernel](http://tezos.gitlab.io/alpha/smart_rollups.html#developing-wasm-kernels). Additionally, it showcases
-simple end-to-end rollup applications, demonstrating how you can use rollups in your DApps.
+This repository is intended as companion to the docs on [developing your wasm kernel](http://tezos.gitlab.io/alpha/smart_rollups.html#developing-wasm-kernels). Additionally, it showcases simple end-to-end rollup applications, demonstrating how you can use rollups in your DApps.
 
 We recommend going through examples in order:
+
 - **00_debug_kernel**: shows how to debug messages and read from the shared inbox.
 - **01_storage_kernel**: shows how to read and write to the kernel's persistent storage.
 - **02_reboot_kernel**: shows how to mark a kernel reboot and discusses kernel control flow.
@@ -19,9 +17,7 @@ We recommend going through examples in order:
 - **06_counter_kernel**: a larger example combining the above elements into a simple counter application.
 - **09_tzwitter_app**: A full fledged rollup DApp for social media, combining an L1 smart contract, rollup kernel, React+Typescript frontend, and deployment script.
 
-Each kernel directory includes a README.md that demonstrates how to test the kernel
-with the `octez-smart-rollup-wasm-debugger` against a set of inputs and commands. The
-expected outputs are included in the README and checked in CI with [MDX](https://github.com/realworldocaml/mdx).
+Each kernel directory includes a README.md that demonstrates how to test the kernel with the `octez-smart-rollup-wasm-debugger` against a set of inputs and commands. The expected outputs are included in the README.
 
 ## Setup
 
@@ -99,10 +95,11 @@ export TZWITTER_L1_CONTRACT="KT1..."
 cargo build --release --target wasm32-unknown-unknown
 ```
 
-Alternatively, you can build using `cargo-make`:
+Alternatively, you can build one kernel at a time by going to the corresponding folder:
 
-```shell
-cargo make wasm
+```bash
+cd 00_debug_kernel
+cargo build --release --target wasm32-unknown-unknown
 ```
 
 ### Strip the generated WASM
@@ -115,25 +112,22 @@ Notice that, you need to make sure you have installed `wabt` with your system pa
 wasm-strip target/wasm32-unknown-unknown/release/<name>_kernel.wasm
 ```
 
-
 ## Tests
 
-Each kernel comes with tests and tests of the README, defined as [`cargo-make`](https://github.com/sagiegurari/cargo-make) tasks.
-You can install `cargo-make` like so:
+Each kernel comes with tests.
 
 ```shell
-cargo install cargo-make
+cargo test
 ```
 
 ## Octez Smart Rollup WASM Debugger
 
-The Octez software system includes an interactive debugger for Smart Rollup kernels, documented [here](https://tezos.gitlab.io/alpha/smart_rollups.html#testing-your-kernel). 
+The Octez software system includes an interactive debugger for Smart Rollup kernels, documented [here](https://tezos.gitlab.io/alpha/smart_rollups.html#testing-your-kernel).
 Each kernel's README includes examples how to use it.
 
 ## Deployment
 
-Refer to [the docs](https://tezos.gitlab.io/alpha/smart_rollups.html#deploying-a-rollup-node). Additionally, 
-you can look at an example deployment script in `./09_tzwitter_app/deploy.sh`.
+Refer to [the docs](https://tezos.gitlab.io/alpha/smart_rollups.html#deploying-a-rollup-node). Additionally, you can look at an example deployment script in `./09_tzwitter_app/deploy.sh`.
 
 ## Sequencer
 

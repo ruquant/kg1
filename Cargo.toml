@@ -9,7 +9,7 @@ members = [
     "05_outbox_kernel",
     "06_counter_kernel",
     "07_upgrade_kernel",
-    "07_upgrade_kernel/upgrade-client" ,
+    "07_upgrade_kernel/upgrade-client",
     "08_tzwitter_app/kernel" 
 ]
 
