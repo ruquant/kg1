@@ -1,21 +1,18 @@
 stages:
   - test
-  - lint
   - build
 
-test:
-  image: rust
-  script:
-    - cargo test
-
-lint:
+cargo-test:
+  stage: test
   image: rust
   script:
     - rustup component add clippy rustfmt
     - cargo fmt --check
     - cargo clippy -- -D warnings
+    - cargo test
 
-build:
+cargo-build:
+  stage: build
   image: rust
   variables:
     TZWITTER_L1_CONTRACT: "KT1..."
