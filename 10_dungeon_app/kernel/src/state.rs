@@ -1,11 +1,6 @@
-use crate::{
-    item::Item,
-    map::Map,
-    map::TileType,
-    map::MAP_HEIGHT,
-    map::MAP_WIDTH,
-    player::{Player, MAX_ITEMS},
-};
+use crate::map::{Map, TileType, MAP_HEIGHT, MAP_WIDTH};
+use crate::player::Player;
+use crate::player_actions::PlayerAction;
 
 // Define State
 #[derive(Clone, PartialEq)]
@@ -28,5 +23,15 @@ impl State {
         } else {
             self
         }
+    }
+
+    pub fn transition(self, player_action: PlayerAction) -> State {
+        let next_player = match player_action {
+            PlayerAction::MoveRight => self.player.move_right(),
+            PlayerAction::MoveLeft => self.player.move_left(),
+            PlayerAction::MoveUp => self.player.move_up(),
+            PlayerAction::MoveDown => self.player.move_down(),
+        };
+        self
     }
 }

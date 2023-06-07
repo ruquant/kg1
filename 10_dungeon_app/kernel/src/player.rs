@@ -1,5 +1,3 @@
-use crate::item::Item;
-
 pub const MAX_ITEMS: usize = 2;
 
 #[derive(Clone, PartialEq)]
