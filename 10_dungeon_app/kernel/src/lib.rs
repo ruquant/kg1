@@ -5,10 +5,6 @@ mod player;
 mod player_actions;
 mod state;
 mod storage;
-<<<<<<< HEAD
-=======
-use player::Player;
->>>>>>> 4bbb869 (Dungeon: call transition function, update_state, etc. in lib.rs)
 use player_actions::PlayerMsg;
 use state::State;
 use storage::{load_player, load_state, update_player, update_state};
