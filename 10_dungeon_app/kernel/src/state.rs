@@ -15,10 +15,10 @@ pub struct State {
 }
 
 impl State {
-    pub fn new() -> Self {
+    pub fn new(player_address: String) -> Self {
         Self {
             map: Map::new(),
-            player: Player::new(MAP_WIDTH / 2, MAP_HEIGHT / 2),
+            player: Player::new(MAP_WIDTH / 2, MAP_HEIGHT / 2, player_address),
         }
     }
 

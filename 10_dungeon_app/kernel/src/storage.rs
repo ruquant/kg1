@@ -7,30 +7,101 @@ use tezos_smart_rollup_host::path::{concat, OwnedPath, RefPath};
 use tezos_smart_rollup_host::runtime::{Runtime, RuntimeError};
 
 const MAP_PATH: RefPath = RefPath::assert_from(b"/state/map");
-const X_POS_PATH: RefPath = RefPath::assert_from(b"/state/player/x_pos");
-const Y_POS_PATH: RefPath = RefPath::assert_from(b"/state/player/y_pos");
+const PLAYER_PATH: RefPath = RefPath::assert_from(b"/players");
 
-pub fn load_player<R: Runtime>(rt: &mut R) -> Result<Player, RuntimeError> {
-    let x_pos_exists = rt.store_has(&X_POS_PATH);
-    let y_pos_exists = rt.store_has(&Y_POS_PATH);
+// player key: /players/{public_key}/[x_pos|y_pos|inventory]
+// Add a player key bytaking the player address, from the PLAYER_PATH
+// &str: to take a reference of string
+fn player_key(player_address: &str) -> OwnedPath {
+    // define the suffix of player address
+    let player_address: Vec<u8> = format!("/{}", player_address).into();
+    // we have to use the OwnedPath to do the define of the path
+    // OwnedPath and RefPath "maybe" the same in kernel?
+    let player_address = OwnedPath::try_from(player_address).unwrap();
 
-    match (x_pos_exists, y_pos_exists) {
-        (Ok(None), Ok(None)) => {
-            let player = Player::new(MAP_WIDTH / 2, MAP_HEIGHT / 2);
-            Ok(player)
-        }
-        (Err(err), _) | (_, Err(err)) => Err(err),
-        (Ok(Some(_)), Ok(Some_)) => {
-            let x_pos = rt.store_read(&X_POS_PATH, 0, std::mem::size_of::<usize>())?;
-            let y_pos = rt.store_read(&Y_POS_PATH, 0, std::mem::size_of::<usize>())?;
+    // now we concat the prefix is b"/players/, and the suffix is the player address
+    concat(&PLAYER_PATH, &player_address).unwrap()
+}
+
+// Now we define the /players/{public_key}/x_pos
+fn player_x_pos(player_address: &str) -> OwnedPath {
+    // convert it to a string, and we are sure that it is a string so we can unwrap it
+    // then we can call the OwnedPath::try_from
+    let x_pos_path = OwnedPath::try_from("/x_pos".to_string()).unwrap();
+
+    let player_path = player_key(player_address);
+    concat(&player_path, &x_pos_path).unwrap()
+}
+
+// Now we define the /players/{public_key}/y_pos
+fn player_y_pos(player_address: &str) -> OwnedPath {
+    // convert it to a string, and we are sure that it is a string so we can unwrap it
+    // then we can call the OwnedPath::try_from
+    let y_pos_path = OwnedPath::try_from("/y_pos".to_string()).unwrap();
+
+    let player_path = player_key(player_address);
+    concat(&player_path, &y_pos_path).unwrap()
+}
+
+// Now we define the /players/{public_key}/inventory
+fn player_inventory(player_address: &str) -> OwnedPath {
+    // convert it to a string, and we are sure that it is a string so we can unwrap it
+    // then we can call the OwnedPath::try_from
+    let inventory_path = OwnedPath::try_from("/inventory".to_string()).unwrap();
+
+    let player_path = player_key(player_address);
+    concat(&player_path, &inventory_path).unwrap()
+}
+
+pub fn load_player<R: Runtime>(rt: &mut R, player_address: &str) -> Result<Player, RuntimeError> {
+    let player_path = player_key(player_address);
+
+    let player_exists = rt.store_has(&player_path)?;
+
+    match player_exists {
+        Some(_) => {
+            let x_pos = rt.store_read(
+                &player_x_pos(&player_address),
+                0,
+                std::mem::size_of::<usize>(),
+            )?;
+
+            let y_pos = rt.store_read(
+                &player_y_pos(&player_address),
+                0,
+                std::mem::size_of::<usize>(),
+            )?;
 
             // convert player from usize, catch the list into an array
             let x_pos = usize::from_be_bytes(x_pos.try_into().unwrap());
             let y_pos = usize::from_be_bytes(y_pos.try_into().unwrap());
 
-            let player = Player { x_pos, y_pos };
-            Ok(player)
+            // inventory also binid with the player_address
+            let inventory_bytes =
+                rt.store_read(&player_inventory(&player_address), 0, MAX_ITEMS)?;
+
+            // convert bytes -> vector
+            let inventory: Vec<Item> = inventory_bytes
+                .iter()
+                .filter_map(|bytes| match bytes {
+                    0x01 => Some(Item::Sword),
+                    0x02 => Some(Item::Potion),
+                    _ => None,
+                })
+                .collect();
+
+            Ok(Player {
+                address: player_address.to_string(),
+                x_pos,
+                y_pos,
+                inventory,
+            })
         }
+        _ => Ok(Player::new(
+            MAP_WIDTH / 2,
+            MAP_HEIGHT / 2,
+            player_address.to_string(),
+        )),
     }
 }
 
@@ -62,19 +133,35 @@ fn load_map<R: Runtime>(rt: &mut R) -> Result<Map, RuntimeError> {
     }
 }
 
-pub fn load_state<R: Runtime>(rt: &mut R) -> Result<State, RuntimeError> {
-    let player = load_player(rt)?;
+pub fn load_state<R: Runtime>(rt: &mut R, player_address: &str) -> Result<State, RuntimeError> {
+    let player = load_player(rt, player_address)?;
     let map = load_map(rt)?;
     Ok(State { player, map })
 }
 
-pub fn update_player<R: Runtime>(rt: &mut R, player: &Player) -> Result<(), RuntimeError> {
+pub fn update_player<R: Runtime>(
+    rt: &mut R,
+    player_address: &str,
+    player: &Player,
+) -> Result<(), RuntimeError> {
     // player position: convert vector back to bytes, and store it in the x_pos_path
     let x_pos = usize::to_be_bytes(player.x_pos);
     let () = rt.store_write(&player_x_pos(&player_address), &x_pos, 0)?;
 
     let y_pos = usize::to_be_bytes(player.y_pos);
     let () = rt.store_write(&player_y_pos(&player_address), &y_pos, 0)?;
+
+    // inventory: vec -> bytes
+    let inventory: Vec<u8> = player
+        .inventory
+        .iter()
+        .map(|item| match item {
+            Item::Sword => 0x01,
+            Item::Potion => 0x02,
+        })
+        .collect();
+
+    let () = rt.store_write(&player_inventory(player_address), &inventory, 0)?;
 
     Ok(())
 }
@@ -96,8 +183,12 @@ fn update_map<R: Runtime>(rt: &mut R, map: &Map) -> Result<(), RuntimeError> {
     Ok(())
 }
 
-pub fn update_state<R: Runtime>(rt: &mut R, state: &State) -> Result<(), RuntimeError> {
-    update_player(rt, &state.player)?;
+pub fn update_state<R: Runtime>(
+    rt: &mut R,
+    player_address: &str,
+    state: &State,
+) -> Result<(), RuntimeError> {
+    update_player(rt, player_address, &state.player)?;
     update_map(rt, &state.map)?;
     Ok(())
 }
