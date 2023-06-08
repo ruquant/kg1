@@ -12,6 +12,7 @@ use crate::{
 pub struct State {
     pub map: Map,
     pub player: Player,
+    pub market_place: MarketPlace,
 }
 
 impl State {
@@ -19,6 +20,7 @@ impl State {
         Self {
             map: Map::new(),
             player: Player::new(MAP_WIDTH / 2, MAP_HEIGHT / 2, player_address),
+            market_place: MarketPlace::new(),
         }
     }
 

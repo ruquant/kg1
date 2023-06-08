@@ -8,6 +8,7 @@ use tezos_smart_rollup_host::runtime::{Runtime, RuntimeError};
 
 const MAP_PATH: RefPath = RefPath::assert_from(b"/state/map");
 const PLAYER_PATH: RefPath = RefPath::assert_from(b"/players");
+const MARKET_PLACE_PATH: RefPath = RefPath::assert_from(b"/market-place");
 
 // player key: /players/{public_key}/[x_pos|y_pos|inventory]
 // Add a player key bytaking the player address, from the PLAYER_PATH
@@ -53,6 +54,54 @@ fn player_inventory(player_address: &str) -> OwnedPath {
     concat(&player_path, &inventory_path).unwrap()
 }
 
+/// Market-place
+
+// Now we define the /players/{public_key}/gold
+fn player_gold(player_address: &str) -> OwnedPath {
+    let gold_path = OwnedPath::try_from("/gold".to_string()).unwrap();
+    let player_path = player_key(player_address);
+    concat(&player_path, &gold_path).unwrap()
+}
+
+// Market-place
+
+// market-place key: /market-place/{public_key}/[01/02]/value
+// sword: 01
+// potion: 02
+fn market_place_key(player_address: &str) -> OwnedPath {
+    let player_address: Vec<u8> = format!("/{}", player_address).into();
+    let player_address = OwnedPath::try_from(player_address).unwrap();
+    concat(&MARKET_PLACE_PATH, &player_address).unwrap()
+}
+
+// marketplace item_01
+fn market_place_sword(player_address: &str) -> OwnedPath {
+    let sword_id_path = OwnedPath::try_from("/01".to_string()).unwrap();
+    let market_place_path = market_place_key(player_address);
+    concat(&market_place_path, &sword_id_path).unwrap()
+}
+
+// add value for item_01
+fn market_place_value_sword(player_address: &str) -> OwnedPath {
+    let sword_id_path = market_place_sword(player_address);
+    let value_sword_path = OwnedPath::try_from("/value".to_string()).unwrap();
+    concat(&sword_id_path, &value_sword_path).unwrap()
+}
+
+// marketplace item_02
+fn market_place_potion(player_address: &str) -> OwnedPath {
+    let potion_id_path = OwnedPath::try_from("/02".to_string()).unwrap();
+    let market_place_path = market_place_key(player_address);
+    concat(&market_place_path, &potion_id_path).unwrap()
+}
+
+// add value for item_02
+fn market_place_value_potion(player_address: &str) -> OwnedPath {
+    let potion_id_path = market_place_potion(player_address);
+    let value_potion_path = OwnedPath::try_from("/value".to_string()).unwrap();
+    concat(&potion_id_path, &value_potion_path).unwrap()
+}
+
 pub fn load_player<R: Runtime>(rt: &mut R, player_address: &str) -> Result<Player, RuntimeError> {
     let player_path = player_key(player_address);
 
@@ -90,11 +139,21 @@ pub fn load_player<R: Runtime>(rt: &mut R, player_address: &str) -> Result<Playe
                 })
                 .collect();
 
+            let gold = rt.store_read(
+                &player_gold(player_address),
+                0,
+                std::mem::size_of::<usize>(),
+            )?;
+
+            // convert bytes -> usize
+            let gold = usize::from_be_bytes(gold.try_into().unwrap());
+
             Ok(Player {
                 address: player_address.to_string(),
                 x_pos,
                 y_pos,
                 inventory,
+                gold,
             })
         }
         _ => Ok(Player::new(
@@ -133,10 +192,65 @@ fn load_map<R: Runtime>(rt: &mut R) -> Result<Map, RuntimeError> {
     }
 }
 
+fn load_market_place<R: Runtime>(rt: &mut R) -> Result<MarketPlace, RuntimeError> {
+    let market_place_exists = rt.store_has(&MARKET_PLACE_PATH)?;
+
+    match market_place_exists {
+        Some(_) => {
+            // First we start from 0 to 8
+            let index_size: Vec<u8> = rt.store_read(&MARKET_PLACE_PATH, 0, 8)?; // because usize is represented with 8 bytes
+
+            let index_size = index_size
+                .try_into()
+                .map_err(|_| RuntimeError::DecodingError)?;
+            let index_size = usize::from_be_bytes(index_size);
+
+            // then we read again start from 8 to the size of the index
+            let index = rt.store_read(&MARKET_PLACE_PATH, 8, index_size)?;
+            let index: Vec<(String, Item)> =
+                bincode::deserialize(&index).map_err(|_| RuntimeError::DecodingError)?;
+
+            // create a new market place
+            let mut inner = HashMap::new();
+
+            for (player_address, item) in index {
+                match item {
+                    Item::Sword => {
+                        let path = &market_place_value_sword(&player_address);
+                        let price = rt.store_read(path, 0, 8)?; // 8 because the price is an usize
+                        let price = price.try_into().map_err(|_| RuntimeError::DecodingError)?;
+                        let price = usize::from_be_bytes(price);
+                        println!("sword price");
+                        let _ = inner.insert((player_address, item), price);
+                    }
+                    Item::Potion => {
+                        let path = &market_place_value_potion(&player_address);
+                        let price = rt.store_read(path, 0, 8)?;
+                        let price = price.try_into().map_err(|_| RuntimeError::DecodingError)?;
+                        let price = usize::from_be_bytes(price);
+                        // insert the new price
+                        let _ = inner.insert((player_address, item), price);
+                    }
+                }
+            }
+
+            Ok(MarketPlace { inner })
+        }
+        // if there is none then it is new hashmap using the default
+        _ => Ok(MarketPlace::default()),
+    }
+}
+
 pub fn load_state<R: Runtime>(rt: &mut R, player_address: &str) -> Result<State, RuntimeError> {
     let player = load_player(rt, player_address)?;
     let map = load_map(rt)?;
-    Ok(State { player, map })
+    let market_place = load_market_place(rt)?;
+
+    Ok(State {
+        player,
+        map,
+        market_place,
+    })
 }
 
 pub fn update_player<R: Runtime>(
@@ -163,6 +277,10 @@ pub fn update_player<R: Runtime>(
 
     let () = rt.store_write(&player_inventory(player_address), &inventory, 0)?;
 
+    // gold: usize -> bytes
+    let gold = usize::to_be_bytes(player.gold);
+    let () = rt.store_write(&player_gold(&player_address), &gold, 0)?;
+
     Ok(())
 }
 
@@ -183,6 +301,40 @@ fn update_map<R: Runtime>(rt: &mut R, map: &Map) -> Result<(), RuntimeError> {
     Ok(())
 }
 
+fn update_market_place<R: Runtime>(
+    rt: &mut R,
+    market_place: &MarketPlace,
+) -> Result<(), RuntimeError> {
+    // delete the market place
+    rt.store_delete(&MARKET_PLACE_PATH)?;
+    // to replace it by the updated one
+
+    // update index
+    let index: Vec<(String, Item)> = market_place.inner.keys().cloned().collect();
+    let bytes = bincode::serialize(&index).map_err(|_| RuntimeError::DecodingError)?;
+    let bytes_size = bytes.len().to_be_bytes();
+
+    // 00000032[list]
+    // save data with non specific size
+    rt.store_write(&MARKET_PLACE_PATH, &bytes_size, 0)?;
+    rt.store_write(&MARKET_PLACE_PATH, &bytes, bytes_size.len())?;
+
+    // matching the item to write
+    for ((address, item), price) in &market_place.inner {
+        let price = price.to_be_bytes();
+        match item {
+            Item::Potion => {
+                let () = rt.store_write(&market_place_value_potion(address), &price, 0)?;
+            }
+            Item::Sword => {
+                let () = rt.store_write(&market_place_value_sword(address), &price, 0)?;
+            }
+        }
+    }
+
+    Ok(())
+}
+
 pub fn update_state<R: Runtime>(
     rt: &mut R,
     player_address: &str,
@@ -190,5 +342,7 @@ pub fn update_state<R: Runtime>(
 ) -> Result<(), RuntimeError> {
     update_player(rt, player_address, &state.player)?;
     update_map(rt, &state.map)?;
+    update_market_place(rt, &state.market_place)?;
+
     Ok(())
 }

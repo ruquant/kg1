@@ -8,6 +8,7 @@ pub struct Player {
     pub x_pos: usize,
     pub y_pos: usize,
     pub inventory: Vec<Item>,
+    pub gold: usize,
 }
 
 impl Player {
@@ -17,6 +18,8 @@ impl Player {
             x_pos,
             y_pos,
             inventory: Vec::new(),
+            // default 1000 gold for each player
+            gold: 1000,
         }
     }
 }
