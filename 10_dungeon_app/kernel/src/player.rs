@@ -6,10 +6,15 @@ pub const MAX_ITEMS: usize = 2;
 pub struct Player {
     pub x_pos: usize,
     pub y_pos: usize,
+    pub inventory: Vec<Item>,
 }
 
 impl Player {
     pub fn new(x_pos: usize, y_pos: usize) -> Self {
-        Self { x_pos, y_pos }
+        Self {
+            x_pos,
+            y_pos,
+            inventory: Vec::new(),
+        }
     }
 }
