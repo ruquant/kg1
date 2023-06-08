@@ -111,18 +111,14 @@ impl State {
 
     // Marketplace: Buy(player_address, item)
     // Todo: remove player_address, because we can access the address from self.player.address
-    pub fn buy_item(
-        self,
-        player_address: &str,
-        item: Item,
-        other_player: Player,
-    ) -> (State, Player) {
+    pub fn buy_item(self, item: Item, other_player: Player) -> (State, Player) {
         // TODO: remove this condition
-        if self.player.address == other_player.address {
+        /*if self.player.address == other_player.address {
             return (self, other_player);
-        }
+        }*/
+        //let player_address = self.player.address;
 
-        let price = self.market_place.get_price(player_address, item);
+        let price = self.market_place.get_price(&self.player.address, item);
 
         // check the inventory length
         let inventory_len = self.player.inventory.len();
@@ -140,7 +136,7 @@ impl State {
                 }
                 let mut market_place = self.market_place;
 
-                market_place.buy_item(player_address, item);
+                market_place.buy_item(&self.player.address, item);
                 //println!("after buy item: {:?}", market_place.inner);
 
                 // then add the item to the inventory
@@ -194,8 +190,8 @@ impl State {
                 let state = self.sell_item(current_player_address, item_id, price);
                 (state, None)
             }
-            (Some(other_player), PlayerAction::Buy(player_address, item)) => {
-                let (state, player) = self.buy_item(&player_address, item, other_player);
+            (Some(other_player), PlayerAction::Buy(item)) => {
+                let (state, player) = self.buy_item(item, other_player);
                 (state, Some(player))
             }
             _ => (self, None),

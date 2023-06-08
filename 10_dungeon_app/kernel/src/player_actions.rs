@@ -18,7 +18,7 @@ pub enum PlayerAction {
     // Sell(ItemId, Price)
     Sell(usize, usize),
     // Buy(PlayerAddress, ItemId)
-    Buy(String, Item),
+    Buy(Item),
 }
 
 // convert bytes -> playerAction need to have the implement of tryFrom
@@ -69,18 +69,24 @@ impl TryFrom<Vec<u8>> for PlayerMsg {
                     [48, 55, 48, 48] => Ok(PlayerAction::Sell(0, 100)),
                     [48, 55, 48, 49] => Ok(PlayerAction::Sell(1, 100)),
                     // buy sword
-                    [48, 56, 48, 49, address @ ..] => {
+                    /*[48, 56, 48, 49, address @ ..] => {
                         let address: &str = &String::from_utf8(address.to_vec()).map_err(|_| ())?;
-                        let address: String = address.to_string();
-                        println!("address of the seller: {}", address);
-                        Ok(PlayerAction::Buy(address, Item::Sword))
+                        //let address: String = address.to_string();
+                        //println!("address of the seller: {}", address);
+                        Ok(PlayerAction::Buy(Item::Sword))
+                    }*/
+                    [48, 56, 48, 49] => {
+                        //let address: &str = &String::from_utf8(address.to_vec()).map_err(|_| ())?;
+                        //let address: String = address.to_string();
+                        //println!("address of the seller: {}", address);
+                        Ok(PlayerAction::Buy(Item::Sword))
                     }
                     // buy potion
-                    [48, 56, 48, 50, address @ ..] => {
-                        let address: &str = &String::from_utf8(address.to_vec()).map_err(|_| ())?;
-                        let address: String = address.to_string();
-                        println!("address of the seller: {}", address);
-                        Ok(PlayerAction::Buy(address, Item::Potion))
+                    [48, 56, 48, 50] => {
+                        //let address: &str = &String::from_utf8(address.to_vec()).map_err(|_| ())?;
+                        //let address: String = address.to_string();
+                        //println!("address of the seller: {}", address);
+                        Ok(PlayerAction::Buy(Item::Potion))
                     }
                     _ => Err(()),
                 }?;

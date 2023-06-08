@@ -28,9 +28,7 @@ pub fn entry<R: Runtime>(rt: &mut R) {
                 } = player_msg;
 
                 let other_placer: Option<Player> = match &player_action {
-                    player_actions::PlayerAction::Buy(player_address, _) => {
-                        load_player(rt, player_address).ok()
-                    }
+                    player_actions::PlayerAction::Buy(_) => load_player(rt, &player_address).ok(),
                     _ => None,
                 };
 
@@ -44,8 +42,8 @@ pub fn entry<R: Runtime>(rt: &mut R) {
                     match player {
                         None => {}
                         Some(player) => {
-                            if let player_actions::PlayerAction::Buy(address, _) = &player_action {
-                                let _ = update_player(rt, address, &player);
+                            if let player_actions::PlayerAction::Buy(_) = &player_action {
+                                let _ = update_player(rt, &player_address, &player);
                             }
                         }
                     }
