@@ -8,9 +8,8 @@ mod storage;
 use player_actions::PlayerMsg;
 use state::State;
 use storage::{load_player, load_state, update_player, update_state};
-use tezos_smart_rollup::host::RuntimeError;
-use tezos_smart_rollup::kernel_entry;
-use tezos_smart_rollup::prelude::Runtime;
+use tezos_smart_rollup_entrypoint::kernel_entry;
+use tezos_smart_rollup_host::runtime::{Runtime, RuntimeError};
 
 pub fn entry<R: Runtime>(rt: &mut R) {
     rt.write_debug("Hello world");

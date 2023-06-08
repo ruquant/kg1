@@ -3,13 +3,10 @@ use crate::map::{Map, TileType, MAP_HEIGHT, MAP_WIDTH};
 use crate::market_place::MarketPlace;
 use crate::player::{Player, MAX_ITEMS};
 use crate::state::State;
-use crate::Runtime;
-use crate::RuntimeError;
 use std::collections::HashMap;
 
-use tezos_smart_rollup::storage::path::concat;
-use tezos_smart_rollup::storage::path::OwnedPath;
-use tezos_smart_rollup::storage::path::RefPath;
+use tezos_smart_rollup_host::path::{concat, OwnedPath, RefPath};
+use tezos_smart_rollup_host::runtime::{Runtime, RuntimeError};
 
 const MAP_PATH: RefPath = RefPath::assert_from(b"/state/map");
 const PLAYER_PATH: RefPath = RefPath::assert_from(b"/players");

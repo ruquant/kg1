@@ -535,6 +535,11 @@ dependencies = [
  "rand 0.8.5",
  "serde",
  "tezos-smart-rollup 0.1.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "tezos-smart-rollup-core 0.1.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "tezos-smart-rollup-encoding 0.1.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "tezos-smart-rollup-entrypoint 0.1.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "tezos-smart-rollup-host 0.1.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "tezos-smart-rollup-storage 0.1.0 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
 
 [[package]]
