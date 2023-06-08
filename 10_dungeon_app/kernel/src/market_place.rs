@@ -18,6 +18,7 @@ impl Default for MarketPlace {
 }
 
 impl MarketPlace {
+    #[allow(dead_code)]
     pub fn new() -> Self {
         Self::default()
     }

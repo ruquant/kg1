@@ -32,7 +32,7 @@ impl Player {
                 inventory: self.inventory.clone(),
                 gold: self.gold,
             })
-            .unwrap_or(self.clone())
+            .unwrap_or_else(|| self.clone())
     }
 
     pub fn move_down(&self) -> Player {
@@ -54,7 +54,7 @@ impl Player {
                 inventory: self.inventory.clone(),
                 gold: self.gold,
             })
-            .unwrap_or(self.clone())
+            .unwrap_or_else(|| self.clone())
     }
 
     pub fn move_right(&self) -> Player {
