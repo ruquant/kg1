@@ -60,4 +60,29 @@ impl Map {
             _ => false,
         }
     }
+
+    // remove item from the map
+    pub fn remove_item(self, x_pos: usize, y_pos: usize) -> Self {
+        match self.get_tile(x_pos, y_pos) {
+            // if there is something on the floor then return none
+            Some(TileType::Floor(Some(_))) => {
+                let mut tiles = self.tiles;
+                tiles[map_idx(x_pos, y_pos)] = TileType::Floor(None);
+                Self { tiles }
+            }
+            _ => self,
+        }
+    }
+
+    // add item after drop into the map
+    pub fn add_item(self, x_pos: usize, y_pos: usize, item: Item) -> Self {
+        match self.get_tile(x_pos, y_pos) {
+            Some(TileType::Floor(None)) => {
+                let mut tiles = self.tiles;
+                tiles[map_idx(x_pos, y_pos)] = TileType::Floor(Some(item));
+                Self { tiles }
+            }
+            _ => self,
+        }
+    }
 }

@@ -21,4 +21,22 @@ impl MarketPlace {
     pub fn new() -> Self {
         Self::default()
     }
+
+    pub fn get_price(&self, player_address: &str, item: Item) -> Option<usize> {
+        self.inner.get(&(player_address.to_string(), item)).copied()
+    }
+
+    // Add buy
+
+    pub fn buy_item(&mut self, player_address: &str, item: Item) {
+        self.inner.remove(&(player_address.to_string(), item));
+        println!("buy item: {:?}", self.inner);
+    }
+
+    // Add sell
+
+    pub fn sell_item(&mut self, current_player_address: &str, item: Item, price: usize) {
+        self.inner
+            .insert((current_player_address.to_string(), item), price);
+    }
 }
