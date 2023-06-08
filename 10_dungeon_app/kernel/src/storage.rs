@@ -1,10 +1,15 @@
 use crate::item::Item;
 use crate::map::{Map, TileType, MAP_HEIGHT, MAP_WIDTH};
+use crate::market_place::MarketPlace;
 use crate::player::{Player, MAX_ITEMS};
-
 use crate::state::State;
-use tezos_smart_rollup_host::path::{concat, OwnedPath, RefPath};
-use tezos_smart_rollup_host::runtime::{Runtime, RuntimeError};
+use crate::Runtime;
+use crate::RuntimeError;
+use std::collections::HashMap;
+
+use tezos_smart_rollup::storage::path::concat;
+use tezos_smart_rollup::storage::path::OwnedPath;
+use tezos_smart_rollup::storage::path::RefPath;
 
 const MAP_PATH: RefPath = RefPath::assert_from(b"/state/map");
 const PLAYER_PATH: RefPath = RefPath::assert_from(b"/players");
@@ -110,13 +115,13 @@ pub fn load_player<R: Runtime>(rt: &mut R, player_address: &str) -> Result<Playe
     match player_exists {
         Some(_) => {
             let x_pos = rt.store_read(
-                &player_x_pos(&player_address),
+                &player_x_pos(player_address),
                 0,
                 std::mem::size_of::<usize>(),
             )?;
 
             let y_pos = rt.store_read(
-                &player_y_pos(&player_address),
+                &player_y_pos(player_address),
                 0,
                 std::mem::size_of::<usize>(),
             )?;
@@ -126,8 +131,7 @@ pub fn load_player<R: Runtime>(rt: &mut R, player_address: &str) -> Result<Playe
             let y_pos = usize::from_be_bytes(y_pos.try_into().unwrap());
 
             // inventory also binid with the player_address
-            let inventory_bytes =
-                rt.store_read(&player_inventory(&player_address), 0, MAX_ITEMS)?;
+            let inventory_bytes = rt.store_read(&player_inventory(player_address), 0, MAX_ITEMS)?;
 
             // convert bytes -> vector
             let inventory: Vec<Item> = inventory_bytes
@@ -260,10 +264,10 @@ pub fn update_player<R: Runtime>(
 ) -> Result<(), RuntimeError> {
     // player position: convert vector back to bytes, and store it in the x_pos_path
     let x_pos = usize::to_be_bytes(player.x_pos);
-    let () = rt.store_write(&player_x_pos(&player_address), &x_pos, 0)?;
+    rt.store_write(&player_x_pos(player_address), &x_pos, 0)?;
 
     let y_pos = usize::to_be_bytes(player.y_pos);
-    let () = rt.store_write(&player_y_pos(&player_address), &y_pos, 0)?;
+    rt.store_write(&player_y_pos(player_address), &y_pos, 0)?;
 
     // inventory: vec -> bytes
     let inventory: Vec<u8> = player
@@ -275,11 +279,11 @@ pub fn update_player<R: Runtime>(
         })
         .collect();
 
-    let () = rt.store_write(&player_inventory(player_address), &inventory, 0)?;
+    rt.store_write(&player_inventory(player_address), &inventory, 0)?;
 
     // gold: usize -> bytes
     let gold = usize::to_be_bytes(player.gold);
-    let () = rt.store_write(&player_gold(&player_address), &gold, 0)?;
+    rt.store_write(&player_gold(player_address), &gold, 0)?;
 
     Ok(())
 }
@@ -296,7 +300,7 @@ fn update_map<R: Runtime>(rt: &mut R, map: &Map) -> Result<(), RuntimeError> {
         })
         .collect();
 
-    let () = rt.store_write(&MAP_PATH, &tiles, 0)?;
+    rt.store_write(&MAP_PATH, &tiles, 0)?;
 
     Ok(())
 }
@@ -324,10 +328,10 @@ fn update_market_place<R: Runtime>(
         let price = price.to_be_bytes();
         match item {
             Item::Potion => {
-                let () = rt.store_write(&market_place_value_potion(address), &price, 0)?;
+                rt.store_write(&market_place_value_potion(address), &price, 0)?;
             }
             Item::Sword => {
-                let () = rt.store_write(&market_place_value_sword(address), &price, 0)?;
+                rt.store_write(&market_place_value_sword(address), &price, 0)?;
             }
         }
     }

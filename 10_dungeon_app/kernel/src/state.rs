@@ -4,7 +4,9 @@ use crate::{
     map::TileType,
     map::MAP_HEIGHT,
     map::MAP_WIDTH,
+    market_place::MarketPlace,
     player::{Player, MAX_ITEMS},
+    player_actions::PlayerAction,
 };
 
 // Define State
@@ -16,6 +18,7 @@ pub struct State {
 }
 
 impl State {
+    #[allow(dead_code)]
     pub fn new(player_address: String) -> Self {
         Self {
             map: Map::new(),

@@ -1,5 +1,4 @@
 use crate::item::Item;
-use rand::Rng;
 use std::vec;
 
 pub const MAP_WIDTH: usize = 32;
@@ -55,10 +54,7 @@ impl Map {
 
     // player can walk on floor but not through walls, the floor can be anything
     pub fn can_enter_tile(&self, x: usize, y: usize) -> bool {
-        match self.get_tile(x, y) {
-            Some(TileType::Floor(_)) => true,
-            _ => false,
-        }
+        matches!(self.get_tile(x, y), Some(TileType::Floor(_)))
     }
 
     // remove item from the map

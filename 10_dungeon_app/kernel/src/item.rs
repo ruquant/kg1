@@ -6,6 +6,7 @@ pub enum Item {
     Potion,
 }
 
+#[allow(dead_code)]
 impl Item {
     pub fn new_sword() -> Self {
         Self::Sword
