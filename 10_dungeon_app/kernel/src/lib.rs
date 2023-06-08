@@ -43,8 +43,8 @@ pub fn entry<R: Runtime>(rt: &mut R) {
                     match player {
                         None => {}
                         Some(player) => {
-                            if let player_actions::PlayerAction::Buy(address, _) = &player_action {
-                                let _ = update_player(rt, address, &player);
+                            if let player_actions::PlayerAction::Buy(_) = &player_action {
+                                let _ = update_player(rt, &player_address, &player);
                             }
                         }
                     }
