@@ -3,10 +3,12 @@ import "./App.css";
 import React, { Component, useEffect, useState } from "react";
 import { InMemorySigner } from "@taquito/signer";
 import { move } from "./action.js";
-import { BOB_SECRET, ALICE_SECRET } from "./player_adds.js";
 import Map from "./components/map";
 import Inventory from "./components/inventory";
 import Marketplace from "./components/market_place";
+import Player_actions from "./components/player_actions";
+import Player_accounts from "./components/player_accounts";
+import { BOB_SECRET } from "./components/player_adds";
 
 /**
  * Split a string into n slices
@@ -41,11 +43,11 @@ const App = () => {
   }, []);
 
   // Player actions
-  const moveUp = move("01", signer);
+  /*const moveUp = move("01", signer);
   const moveDown = move("02", signer);
   const moveLeft = move("03", signer);
   const moveRight = move("04", signer);
-  const pickUp = move("05", signer);
+  const pickUp = move("05", signer);*/
   // drop needs to know the position of the item in the inventory
   // to be able to drop them
   const drop = (itemPosition) => move(`060${itemPosition}`, signer);
@@ -236,18 +238,8 @@ const App = () => {
           {
             // Add buttons to switch between players
           }
-          <div className="buttons-players">
-            <button onClick={() => setSecret(ALICE_SECRET)}>SAM</button>
-            <button onClick={() => setSecret(BOB_SECRET)}>GIMLI</button>
-          </div>
-          <button onClick={moveLeft}>left</button>
-
-          <div className="up-down">
-            <button onClick={moveUp}>up</button>
-            <button onClick={moveDown}>down</button>
-          </div>
-          <button onClick={moveRight}>right</button>
-          <button onClick={pickUp}>pick up (y)</button>
+          <Player_accounts setSecret={setSecret} />
+          <Player_actions move={move} signer={signer} />
         </div>
         {
           // Display inventory belows the buttons
