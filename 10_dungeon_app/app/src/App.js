@@ -6,6 +6,7 @@ import { move } from "./action.js";
 import { BOB_SECRET, ALICE_SECRET } from "./player_adds.js";
 import Map from "./components/map";
 import Inventory from "./components/inventory";
+import Marketplace from "./components/market_place";
 
 /**
  * Split a string into n slices
@@ -255,22 +256,7 @@ const App = () => {
         {
           // Display market place
         }
-        <div style={{ marginTop: "24px" }}>
-          <div>Marketplace:</div>
-          {marketplace.map((item_to_sell, i) => {
-            const { address, price, item } = item_to_sell;
-            const item_name = item === "01" ? "sword" : "potion";
-
-            return (
-              <div>
-                {address} - {item_name} - {price}{" "}
-                <button onClick={buy(address, Number.parseInt(item))}>
-                  buy
-                </button>
-              </div>
-            );
-          })}
-        </div>
+        <Marketplace marketplace={marketplace} buy={buy} />
       </header>
     </div>
   );
