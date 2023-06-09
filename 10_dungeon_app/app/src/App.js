@@ -5,6 +5,7 @@ import { InMemorySigner } from "@taquito/signer";
 import { move } from "./action.js";
 import { BOB_SECRET, ALICE_SECRET } from "./player_adds.js";
 import Map from "./components/map";
+import Inventory from "./components/inventory";
 
 /**
  * Split a string into n slices
@@ -97,13 +98,13 @@ const App = () => {
       // to retrieve all the different players
       // to display players by using the subkeys in sequencer
       // to get all the players in the list
-      const playersRes = await fetch(
+      const players_res = await fetch(
         "http://127.0.0.1:8080/state/subkeys?path=/players"
       );
 
       // update the position of each player
       // .json to parse a text in a json
-      const players = await playersRes.json();
+      const players = await players_res.json();
 
       // go through the list of players and get their publicKeyHash
       // reduce is like fold function in OCaml
@@ -111,18 +112,18 @@ const App = () => {
         async (players, playerAddress) => {
           // Player
           // Fetching the player x position, res1 is the http answer
-          const res1 = await fetch(
+          const x_pos_res = await fetch(
             `http://127.0.0.1:8080/state/value?path=/players/${playerAddress}/x_pos`
           );
           // Getting the response as text
-          const x_pos_bytes = await res1.text();
+          const x_pos_bytes = await x_pos_res.text();
           // Converting the text as number
           const x_pos = Number.parseInt(x_pos_bytes, 16);
 
-          const res2 = await fetch(
+          const y_pos_res = await fetch(
             `http://127.0.0.1:8080/state/value?path=/players/${playerAddress}/y_pos`
           );
-          const y_pos_bytes = await res2.text();
+          const y_pos_bytes = await y_pos_res.text();
           const y_pos = Number.parseInt(y_pos_bytes, 16);
 
           // update players by adding the end of the list the x, y position
@@ -139,21 +140,21 @@ const App = () => {
       const player_address = await signer.publicKeyHash();
 
       // fetching the inventory of the player
-      const res4 = await fetch(
+      const inventory_res = await fetch(
         `http://127.0.0.1:8080/state/value?path=/players/${player_address}/inventory`
       );
       // inventory is a string of 2 bytes: 2 splots
-      const inventory_bytes = await res4.text();
+      const inventory_bytes = await inventory_res.text();
       // split the inventory to string
       const inventory = splitNChars(inventory_bytes);
 
       // fetching the gold of the player
 
-      const res5 = await fetch(
+      const gold_res = await fetch(
         `http://127.0.0.1:8080/state/value?path=/players/${player_address}/gold`
       );
 
-      const gold_bytes = await res5.text();
+      const gold_bytes = await gold_res.text();
       const gold = Number.parseInt(gold_bytes, 16);
 
       updatePlayer({
@@ -164,11 +165,11 @@ const App = () => {
       });
 
       // Map -> Item
-      const res3 = await fetch(
+      const map_res = await fetch(
         "http://127.0.0.1:8080/state/value?path=/state/map"
       );
 
-      const map_bytes = await res3.text();
+      const map_bytes = await map_res.text();
       // need to split the array to a list of string
       const map = splitNChars(map_bytes);
 
@@ -176,7 +177,6 @@ const App = () => {
       updateMap(map);
 
       // fetch the market place
-      console.log("fetch the market place");
       const marketplace_res = await fetch(
         "http://127.0.0.1:8080/state/subkeys?path=/market-place"
       );
@@ -188,20 +188,20 @@ const App = () => {
         // get the address from the seller index
         const address = sellers[index];
 
-        const itemsRes = await fetch(
+        const items_res = await fetch(
           `http://127.0.0.1:8080/state/subkeys?path=/market-place/${address}`
         );
-        const items = await itemsRes.json();
+        const items = await items_res.json();
 
         // going to the items
         for (let indexItem = 0; indexItem < items.length; indexItem++) {
           const itemId = items[indexItem];
 
           // getting the price
-          const priceRes = await fetch(
+          const price_res = await fetch(
             `http://127.0.0.1:8080/state/value?path=/market-place/${address}/${itemId}/value`
           );
-          const price_bytes = await priceRes.text();
+          const price_bytes = await price_res.text();
           const price = Number.parseInt(price_bytes, 16);
 
           // push the sell into market place
@@ -251,55 +251,7 @@ const App = () => {
         {
           // Display inventory belows the buttons
         }
-        <div>
-          <div>Inventory:</div>
-          {player && player.gold && <div>Gold: {player.gold}</div>}
-          {player.inventory.map((item, i) => {
-            // matching the items as before for display
-            switch (item) {
-              case "01":
-                return (
-                  <div className="item">
-                    {
-                      // print the item cell
-                    }
-                    <div
-                      // i : index is unit of the inventory
-                      key={i}
-                      className="cell sword"
-                      tabIndex={0}
-                    />
-                    {
-                      // Print the name of item kind on the right of item cell
-                    }
-                    <div className="item-name">Sword</div>
-                    {
-                      // Add the button next ot the item to drop them, only with the
-                      // click
-                    }
-                    <button onClick={drop(i)}>drop</button>
-                    <button onClick={sell(i)}>sell</button>
-                  </div>
-                );
-              case "02":
-                return (
-                  <div className="item">
-                    <div
-                      // i : index is unit of the inventory
-                      key={i}
-                      className="cell potion"
-                      tabIndex={0}
-                    />
-                    <div className="item-name">Potion</div>
-                    <button onClick={drop(i)}>drop</button>
-                    <button onClick={sell(i)}>sell</button>
-                  </div>
-                );
-              default:
-                return null;
-            }
-          })}
-        </div>
+        <Inventory map={map} player={player} drop={drop} sell={sell} />
         {
           // Display market place
         }
